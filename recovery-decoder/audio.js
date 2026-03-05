@@ -4,16 +4,18 @@
 // "Machine layer" (noise + bandpass + mild saturation) fades away as integrity increases.
 if (window.__RDB_AUDIO_LOADED__) {
   console.warn("audio.js already loaded, skipping");
-} else {
+} else {const SCRIPT_BASE = new URL(".", document.currentScript?.src || window.location.href);
+// Now "audio/..." is always relative to the folder that audio.js lives in.
+const asset = (p) => new URL(p, SCRIPT_BASE).toString();
   window.__RDB_AUDIO_LOADED__ = true;
 const STEMS = [
-  { id: "elecgtr", label: "ELEC GTR", url: "audio/elecgtr.m4a", base: 0.85 },
-  { id: "gtr",     label: "GTR",      url: "audio/gtr.m4a",     base: 0.82 },
-  { id: "piano",   label: "PIANO",    url: "audio/piano.m4a",   base: 0.75 },
-  { id: "pluckies",label: "PLUCKIES", url: "audio/pluckies.m4a",base: 0.78 },
-  { id: "strings", label: "STRINGS",  url: "audio/strings.m4a", base: 0.78 },
-  { id: "vox",     label: "VOX",      url: "audio/vox.m4a",     base: 0.70 },
-  { id: "vox2",    label: "VOX 2",    url: "audio/vox2.m4a",    base: 0.65 },
+  { id: "elecgtr", label: "ELEC GTR", url: asset("audio/elecgtr.m4a"), base: 0.85 },
+  { id: "gtr",     label: "GTR",      url: asset("audio/gtr.m4a"),     base: 0.82 },
+  { id: "piano",   label: "PIANO",    url: asset("audio/piano.m4a"),   base: 0.75 },
+  { id: "pluckies",label: "PLUCKIES", url: asset("audio/pluckies.m4a"),base: 0.78 },
+  { id: "strings", label: "STRINGS",  url: asset("audio/strings.m4a"), base: 0.78 },
+  { id: "vox",     label: "VOX",      url: asset("audio/vox.m4a"),     base: 0.70 },
+  { id: "vox2",    label: "VOX 2",    url: asset("audio/vox2.m4a"),    base: 0.65 },
 ];
 
 // Tuning
@@ -238,4 +240,4 @@ window.activateStem = activateStem;
 window.setIntegrity = setIntegrity;
 window.stopAudio = stopAudio;
 window.__STEMS__ = STEMS;
-}
+}} // end else guard

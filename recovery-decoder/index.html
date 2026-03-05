@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Recovery Decoder Bay</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="overlay" class="overlay">
+    <div class="panel">
+      <div class="title">RECOVERY DECODER BAY</div>
+      <div class="msg" id="overlayMsg">Tap START to initialize audio</div>
+      <button id="startBtn" class="startBtn">START</button>
+      <div class="hintSmall">Drag modules into the decoder. Recover the field.</div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <header class="top">
+      <div class="kicker">BENJIMADA RECOVERY SYSTEM</div>
+      <div class="status" id="status">STANDBY</div>
+    </header>
+
+    <canvas id="c" width="900" height="560"></canvas>
+
+    <footer class="foot">
+      <div class="row">
+        <div class="small">INTEGRITY:</div>
+        <div class="mono" id="integrity">0/7</div>
+      </div>
+
+      <div class="row">
+        <div class="small">NOTE:</div>
+        <div class="mono subtle">If you hear nothing on iPhone, switch Silent Mode off.</div>
+      </div>
+
+      <div class="row hidden" id="la5Row">
+        <div class="small">RECOVERY TEAM:</div>
+        <a class="la5" href="https://liberandos.com" target="_blank" rel="noopener">recovery team enter here</a>
+      </div>
+    </footer>
+  </main>
+
+  <script src="audio.js?v=1"></script>
+  <script src="game.js?v=1"></script>
+</body>
+</html>

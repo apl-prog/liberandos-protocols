@@ -3,24 +3,169 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>PROTOCOLS</title>
+    <title>LIBERANDOS · PROTOCOLS</title>
+    <meta name="robots" content="noindex,nofollow" />
     <style>
-      body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
-      .wrap { max-width: 860px; margin: 0 auto; padding: 24px; }
-      h1 { letter-spacing: 0.06em; font-size: 14px; font-weight: 700; }
-      a { display:block; padding: 14px 0; text-decoration:none; color: inherit; border-bottom: 1px solid rgba(0,0,0,0.12); }
-      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
-      .muted { opacity: 0.7; }
+      :root{
+        --bg:#070A0D;
+        --panel:#0B1016;
+        --line:rgba(255,255,255,.10);
+        --text:rgba(255,255,255,.90);
+        --muted:rgba(255,255,255,.60);
+        --faint:rgba(255,255,255,.38);
+        --accent:rgba(255,255,255,.90);
+      }
+      html,body{height:100%;}
+      body{
+        margin:0;
+        background: radial-gradient(1200px 700px at 20% 10%, rgba(255,255,255,.06), transparent 60%),
+                    radial-gradient(900px 500px at 80% 30%, rgba(255,255,255,.04), transparent 55%),
+                    var(--bg);
+        color:var(--text);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        letter-spacing:.02em;
+      }
+      .wrap{
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 22px;
+      }
+      .header{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:16px;
+        border:1px solid var(--line);
+        background: linear-gradient(180deg, rgba(255,255,255,.04), transparent 75%), var(--panel);
+        border-radius: 16px;
+        padding: 18px 18px 14px;
+      }
+      .title{
+        margin:0;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .16em;
+        color:var(--muted);
+      }
+      .stamp{
+        text-align:right;
+        font-size: 11px;
+        color:var(--faint);
+        line-height:1.35;
+        user-select:none;
+      }
+      .stamp b{ color: var(--muted); font-weight:600; }
+      .grid{
+        margin-top: 14px;
+        border:1px solid var(--line);
+        border-radius: 16px;
+        overflow:hidden;
+        background: var(--panel);
+      }
+      .row{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:14px;
+        padding: 14px 16px;
+        border-top:1px solid var(--line);
+      }
+      .row:first-child{ border-top:none; }
+      .left{
+        display:flex;
+        flex-direction:column;
+        gap:4px;
+        min-width:0;
+      }
+      .code{
+        font-size: 12px;
+        color:var(--faint);
+        text-transform:uppercase;
+        letter-spacing:.12em;
+        white-space:nowrap;
+      }
+      .name{
+        font-size: 14px;
+        color:var(--text);
+        white-space:nowrap;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+      .meta{
+        font-size: 12px;
+        color:var(--muted);
+      }
+      a.launch{
+        flex: 0 0 auto;
+        text-decoration:none;
+        color: var(--accent);
+        border:1px solid var(--line);
+        padding: 10px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        letter-spacing:.10em;
+        text-transform:uppercase;
+        background: rgba(255,255,255,.03);
+      }
+      a.launch:hover{ background: rgba(255,255,255,.06); }
+      .footer{
+        margin-top: 12px;
+        display:flex;
+        justify-content:space-between;
+        gap:12px;
+        color:var(--faint);
+        font-size: 11px;
+        padding: 0 4px;
+      }
+      .footer .muted{ color:var(--muted); }
     </style>
   </head>
   <body>
     <main class="wrap">
-      <h1 class="mono">LIBERANDOS PROTOCOLS</h1>
-      <p class="mono muted">ACCESS LOG: PUBLIC</p>
+      <section class="header">
+        <div>
+          <p class="title">LIBERANDOS · PROTOCOLS</p>
+        </div>
+        <div class="stamp">
+          <div><b>ACCESS</b>: PUBLIC</div>
+          <div><b>CHANNEL</b>: protocols.liberandos.com</div>
+          <div><b>STATUS</b>: ACTIVE</div>
+        </div>
+      </section>
 
-      <a class="mono" href="./orange/">PROTOCOL ORANGE</a>
-      <a class="mono" href="./phase/">PHASE SHIFT OPERATOR</a>
-      <a class="mono" href="./ascension/">ASCENSION</a>
+      <section class="grid" aria-label="Protocol Index">
+        <div class="row">
+          <div class="left">
+            <div class="code">PR-ORANGE</div>
+            <div class="name">PROTOCOL ORANGE</div>
+            <div class="meta">Entry vector: peel</div>
+          </div>
+          <a class="launch" href="./orange/">Enter</a>
+        </div>
+
+        <div class="row">
+          <div class="left">
+            <div class="code">PR-PHASE</div>
+            <div class="name">PHASE SHIFT OPERATOR</div>
+            <div class="meta">Field device: Generation II</div>
+          </div>
+          <a class="launch" href="./phase/">Enter</a>
+        </div>
+
+        <div class="row">
+          <div class="left">
+            <div class="code">PR-ASCENSION</div>
+            <div class="name">ASCENSION</div>
+            <div class="meta">Obstacle course: live</div>
+          </div>
+          <a class="launch" href="./ascension/">Enter</a>
+        </div>
+      </section>
+
+      <section class="footer">
+        <div><span class="muted">NOTE</span>: do not be distracted</div>
+        <div>LOG: <span class="muted">unsealed</span></div>
+      </section>
     </main>
   </body>
 </html>

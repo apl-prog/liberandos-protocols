@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>APS / ION-01 Protocol Archive</title>
+
+<style>
+  /* ===== 1990s intranet trick =====
+     Use a beveled "chrome" frame made from nested tables + light/dark borders,
+     plus a conservative gray page background and system fonts.
+  */
+
+  body{
+    margin:0;
+    padding:0;
+    background:#cfcfcf;
+    color:#000;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size:14px;
+  }
+
+  a{ color:#0000cc; }
+  a:visited{ color:#551a8b; }
+
+  .page{
+    width: 760px;
+    margin: 18px auto 28px auto;
+  }
+
+  .chrome-outer{
+    background:#bdbdbd;
+    border-top:2px solid #ffffff;
+    border-left:2px solid #ffffff;
+    border-right:2px solid #7a7a7a;
+    border-bottom:2px solid #7a7a7a;
+    padding:6px;
+  }
+
+  .chrome-inner{
+    background:#efefef;
+    border-top:2px solid #ffffff;
+    border-left:2px solid #ffffff;
+    border-right:2px solid #8a8a8a;
+    border-bottom:2px solid #8a8a8a;
+    padding:10px;
+  }
+
+  .masthead{
+    background:#003366;
+    color:#fff;
+    padding:8px 10px;
+    font-weight:bold;
+    letter-spacing:0.5px;
+  }
+
+  .subhead{
+    background:#d9d9d9;
+    border-top:1px solid #9a9a9a;
+    border-bottom:1px solid #9a9a9a;
+    padding:6px 10px;
+    font-family: "Courier New", Courier, monospace;
+    font-size:12px;
+  }
+
+  .nav{
+    background:#efefef;
+    padding:8px 10px;
+    border-bottom:1px solid #9a9a9a;
+    font-size:12px;
+  }
+
+  .nav a{ text-decoration:none; margin-right:12px; }
+
+  .content{
+    background:#ffffff;
+    border:1px solid #9a9a9a;
+    padding:14px 16px;
+  }
+
+  h1{
+    margin:0 0 10px 0;
+    font-size:18px;
+  }
+
+  h2{
+    margin:18px 0 8px 0;
+    font-size:15px;
+    border-bottom:1px solid #c0c0c0;
+    padding-bottom:4px;
+  }
+
+  h3{
+    margin:12px 0 6px 0;
+    font-size:13px;
+  }
+
+  .note{
+    background:#ffffe1;
+    border:1px solid #c9c98a;
+    padding:8px 10px;
+    margin:10px 0 14px 0;
+  }
+
+  .redacted{
+    margin:14px 0;
+    background:#000;
+    color:#fff;
+    padding:10px 12px;
+    font-weight:bold;
+    letter-spacing:1px;
+    text-transform:uppercase;
+  }
+
+  .figure{
+    margin:10px 0 14px 0;
+    padding:8px;
+    background:#f3f3f3;
+    border:1px solid #9a9a9a;
+  }
+
+  .figure img{
+    display:block;
+    max-width:100%;
+    height:auto;
+    border:1px solid #333;
+    background:#fff;
+  }
+
+  .caption{
+    margin-top:6px;
+    font-family: "Courier New", Courier, monospace;
+    font-size:12px;
+    color:#111;
+  }
+
+  .bullets{
+    margin:6px 0 0 18px;
+  }
+
+  .hr{
+    border:0;
+    height:1px;
+    background:#9a9a9a;
+    margin:14px 0;
+  }
+
+  .footer{
+    margin-top:10px;
+    font-family: "Courier New", Courier, monospace;
+    font-size:11px;
+    color:#222;
+  }
+
+  .printbar{
+    text-align:right;
+    font-size:12px;
+    margin:8px 0 0 0;
+  }
+
+  .printbtn{
+    background:#dcdcdc;
+    border-top:2px solid #ffffff;
+    border-left:2px solid #ffffff;
+    border-right:2px solid #7a7a7a;
+    border-bottom:2px solid #7a7a7a;
+    padding:3px 8px;
+    cursor:pointer;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size:12px;
+  }
+
+  /* Print cleanly on paper */
+  @media print {
+    body{ background:#fff; }
+    .page{ width:auto; margin:0; }
+    .chrome-outer, .chrome-inner, .content{ border:none; }
+    .masthead, .subhead, .nav, .printbar{ display:none; }
+    .figure{ background:#fff; border:1px solid #000; }
+    a{ color:#000; text-decoration:none; }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="page">
+  <div class="chrome-outer">
+    <div class="chrome-inner">
+
+      <div class="masthead">
+        APS OPERATIONS NETWORK (INTERNAL) :: DOCUMENT VIEWER
+      </div>
+
+      <div class="subhead">
+        DOCUMENT ID: BM-APS-ION-01&nbsp;&nbsp;|&nbsp;&nbsp;REV: 2.4&nbsp;&nbsp;|&nbsp;&nbsp;CATEGORY: MAINTENANCE / FIELD PROTOCOL
+      </div>
+
+      <div class="nav">
+        <a href="#slides">Slides</a>
+        <a href="#safety">Safety Poster</a>
+        <a href="#sop">SOP ION-01</a>
+        <a href="#appendix">Appendix</a>
+      </div>
+
+      <div class="content">
+
+        <div class="printbar">
+          <button class="printbtn" onclick="window.print()">PRINT</button>
+        </div>
+
+        <h1>Ion Laser Summoning & Attunement (Archive Extraction)</h1>
+
+        <div class="note">
+          <strong>Source note:</strong> The images on this page originate from a third-party observational device present during early APS events.
+          Although the recording unit was not part of the original maintenance program, field captures were retained and embedded here due to diagnostic value.
+        </div>
+
+        <hr class="hr" />
+
+        <a id="slides"></a>
+        <h2>Protocol Slides (Recovered)</h2>
+
+        <h2>Slide 1: Routine Summoning</h2>
+        <div class="figure">
+          <img src="image1.jpg" alt="Slide 1 field capture - Routine Summoning" />
+          <div class="caption">FIGURE 1. Remote observational capture. White light emission used to summon reflected blue ion laser.</div>
+        </div>
+        <p>
+          Features a maintenance operator using white light to “summon” the reflected blue ion laser.
+        </p>
+        <p>
+          <strong>Mechanism:</strong> White light is split by a prism, then the ion laser immediately begins pulsing beacons to external receivers,
+          which pulse back invisible signals.
+        </p>
+        <p>
+          <strong>Protocol:</strong> The operator is preparing for the bifurcation portion of the operation.
+        </p>
+
+        <h2>Slide 2: Smoke Modality Protocol</h2>
+        <div class="figure">
+          <img src="image2.jpg" alt="Slide 2 field capture - Smoke Modality Protocol" />
+          <div class="caption">FIGURE 2. Ion beam visualization using smoke modality.</div>
+        </div>
+        <p>
+          The engineer is shown with blue ion laser.
+        </p>
+        <p>
+          <strong>Purpose:</strong> Unlocking communication beacon with previously invisible ion beams.
+        </p>
+        <p>
+          <strong>Note:</strong> The operator must “bifurcate the silhouette” with the laser during the operation.
+        </p>
+
+        <h2>Slide 3: Operator Regalia & Sensors</h2>
+        <div class="figure">
+          <img src="image4.png" alt="Slide 3 field capture - Operator Regalia and Sensors" />
+          <div class="caption">FIGURE 3. Partial operator regalia and sensor harness (comms and phase detection).</div>
+        </div>
+        <p>
+          Displays the staff maintenance uniform (only partially observable).
+        </p>
+        <p>
+          <strong>Equipment:</strong> Chest harness featuring comms, and sensors for detecting phase shifting.
+        </p>
+        <p>
+          <strong>Detection Range:</strong> Monitors barometric pressure, AM/FM shortwave, and microwave frequencies.
+        </p>
+
+        <div class="redacted">
+          SLIDES 4 - 12 REDACTED / DESTROYED (APS SYSTEM CHANGES). NO FURTHER INFORMATION AVAILABLE.
+        </div>
+
+        <h2>Slide 13: The Arctic Depository</h2>
+        <div class="figure">
+          <img src="image5.png" alt="Slide 13 field capture - The Arctic Depository" />
+          <div class="caption">FIGURE 13. Arctic depository site (exact coordinates removed).</div>
+        </div>
+        <p>
+          Displays the ion laser at an undisclosed location in the Arctic.
+        </p>
+
+        <h2>Slide 14: Laser Approach</h2>
+        <div class="figure">
+          <img src="image6.png" alt="Slide 14 field capture - Laser Approach" />
+          <div class="caption">FIGURE 14. Approach phase. Red neck diodes illuminated.</div>
+        </div>
+        <p>
+          The operator approaches with red neck diodes illuminated.
+        </p>
+        <p>
+          <strong>Action:</strong> Shines a white light into the sky to coordinate with the blue ion laser.
+        </p>
+        <p>
+          <strong>Risk:</strong> Failure to follow protocol results in “major malalignment.”
+        </p>
+
+        <h2>Slide 15: Attunement and Exit</h2>
+        <div class="figure">
+          <img src="image7.png" alt="Slide 15 field capture - Attunement and Exit" />
+          <div class="caption">FIGURE 15. Attunement posture immediately prior to Phase Realignment and AO departure.</div>
+        </div>
+        <p>
+          The operator attunes to the laser.
+        </p>
+        <p>
+          The operator has initiated “Phase Realignment” and departs the AO (area of operations).
+        </p>
+
+        <hr class="hr" />
+
+        <a id="safety"></a>
+        <h2>Ion Fluctuator Operation: Safety Protocol</h2>
+
+        <div class="note">
+          <strong>Replacement note:</strong> The legacy safety graphic (<code>image3.jpg</code>) has been superseded.
+          The updated printable safety poster below should be used for all reproductions and training packets.
+        </div>
+
+        <div class="figure">
+          <!-- Put your new poster file here. Recommended name: ion-fluctuator-safety.png -->
+          <img src="ion-fluctuator-safety.png" alt="Ion Fluctuator Operation Safety Protocol (Printable Poster)" />
+          <div class="caption">SAFETY POSTER. Current issue for distribution and print.</div>
+        </div>
+
+        <hr class="hr" />
+
+        <a id="sop"></a>
+        <h2>SOP ION-01: Ion Laser Summoning & Attunement</h2>
+
+        <p>
+          <strong>Objective:</strong> To safely summon, coordinate, and attune a reflected blue ion laser via external receiver beacons while maintaining atmospheric stability.
+        </p>
+
+        <h3>1. Preparation &amp; Equipment Check</h3>
+        <ul class="bullets">
+          <li><strong>Regalia Inspection:</strong> Ensure the chest harness is secured. Verify that sensors for barometric pressure, AM/FM shortwave, and microwave frequencies are calibrated.</li>
+          <li><strong>Visual Aids:</strong> Ensure a supply of cigarettes is available for “Smoke Modality” visualization if the ion beam remains invisible to the human eye.</li>
+          <li><strong>Safety Check:</strong> Confirm that LEDs and sensors are active to monitor for Phase Shifting.</li>
+        </ul>
+
+        <h3>2. The Summoning Phase</h3>
+        <ul class="bullets">
+          <li><strong>Beacon Activation:</strong> Initiate the routine summoning of the reflected blue ion laser.</li>
+          <li><strong>Bifurcation:</strong> As the laser pulses beacons to external receivers, the operator must bifurcate the silhouette with the laser.</li>
+          <li><strong>Visualization:</strong> If the beam is not visible, deploy smoke to reveal the ion beam path.</li>
+        </ul>
+
+        <h3>3. Observation &amp; Communication</h3>
+        <ul class="bullets">
+          <li><strong>Unit Excitation:</strong> If using a third-party observational device, vocalize, whistle, or hum to “excite” the unit and ensure proper recording.</li>
+          <li><strong>Data Link:</strong> Utilize the Extendable Portable Ion Laser Stream Procedural Communicator for all procedural data transfers.</li>
+        </ul>
+
+        <h3>4. Stability Monitoring</h3>
+        <ul class="bullets">
+          <li><strong>Fluctuator Management:</strong> Monitor the ion fluctuator constantly.</li>
+          <li><strong>Anomaly Prevention:</strong> Ensure the chest harness is not overly tight; excessive constriction combined with atmospheric phase shifts may trigger a Solar Harmonic Collapse.</li>
+        </ul>
+
+        <h3>5. Coordination &amp; Attunement (Arctic Protocol)</h3>
+        <ul class="bullets">
+          <li><strong>Approach:</strong> Approach the laser depository with red neck diodes fully illuminated.</li>
+          <li><strong>Sky Coordination:</strong> Shine a white light into the sky. This must be perfectly timed with the blue ion laser to avoid Major Malalignment.</li>
+          <li><strong>Resonance:</strong> Wait for the device to reach a state of Full Radiant Echo.</li>
+          <li><strong>Attunement:</strong> Attune yourself to the laser. The operation is successful only once the laser “tunes back” to the operator.</li>
+        </ul>
+
+        <h3>6. Egress</h3>
+        <ul class="bullets">
+          <li><strong>Careful Departure:</strong> If approaching or leaving from an elevated position (aerial approach), maintain a slow, measured pace to avoid disrupting the ion stream.</li>
+        </ul>
+
+        <hr class="hr" />
+
+        <a id="appendix"></a>
+        <h2>Appendix: Observational Frames (Unindexed)</h2>
+
+        <p class="note">
+          The following frames were extracted alongside the slide set. Several appear related to redacted material (Slides 4–12) or off-sequence operator testing.
+          Retained for continuity of record.
+        </p>
+
+        <div class="figure">
+          <img src="image8.png" alt="Observational frame image8.png" />
+          <div class="caption">APPENDIX A. Observational frame: image8.png</div>
+        </div>
+
+        <div class="figure">
+          <img src="image9.jpg" alt="Observational frame image9.jpg" />
+          <div class="caption">APPENDIX B. Observational frame: image9.jpg</div>
+        </div>
+
+        <div class="figure">
+          <img src="image10.jpg" alt="Observational frame image10.jpg" />
+          <div class="caption">APPENDIX C. Observational frame: image10.jpg</div>
+        </div>
+
+        <div class="figure">
+          <img src="image11.png" alt="Observational frame image11.png" />
+          <div class="caption">APPENDIX D. Observational frame: image11.png</div>
+        </div>
+
+        <div class="footer">
+          END OF DOCUMENT :: BM-APS-ION-01 :: REV 2.4 :: PRINTED COPIES ARE UNCONTROLLED
+        </div>
+
+      </div><!-- /content -->
+    </div><!-- /chrome-inner -->
+  </div><!-- /chrome-outer -->
+</div><!-- /page -->
+
+</body>
+</html>

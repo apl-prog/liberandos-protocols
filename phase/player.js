@@ -1,6 +1,7 @@
 // player.js — Phase Shift Operator
 // One looped stem (Mass). Subtle autonomous drift + obvious temporary "stress" on interaction.
-// Interaction now: slowdown + aggressive high-pass (no mud) + clearer wobble.
+// Fixes brightening over time by damping the delay feedback loop.
+// Interaction now: slow-down + highpass + gentle lowpass (anti-shrill) + flutter + more noticeable pitch wobble.
 // Adds a 3s fade-in on Play (and a short fade-out on Pause) so playback is not jarring.
 
 const FILE = "audio/mass.m4a";
@@ -26,35 +27,36 @@ const BASE = {
 const ECHO_DAMP = {
   hpHz: 140,
   lpHzBase: 2200,
-  lpHzMin: 1000, // slightly less dark than before (keep clarity)
+  lpHzMin: 900, // stress pushes it darker
 };
 
-// Interaction tuning
+// Stress tuning (added on top when user interacts)
 const STRESS = {
-  // High-pass becomes the main "pressure" effect
-  highpassAddHz: 2600, // was 1600; push higher to avoid mud
+  // band-shape under touch:
+  highpassAddHz: 1600,
 
-  // Stop dragging LP down hard (mud). Keep only a mild reduction.
-  lowpassMul: 0.88,    // was 0.35; now subtle
+  // IMPORTANT: keep low end from getting swampy but ALSO tame shrillness:
+  // We will drive lowpass downward under stress too.
+  // This replaces "muddy" with a tighter, more controlled squeeze.
+  lowpassMul: 0.62,          // was 0.35 (too dark); 0.62 keeps definition
+  lowpassFloorHz: 1600,      // never below this
 
-  // FX intensity
-  wetAdd: 0.22,        // a bit less than before to avoid smear
-  feedbackAdd: 0.14,   // a bit less than before
-
-  driveAdd: 0.12,      // slightly less crunchy, more controlled
-  widthTarget: 0.10,
+  wetAdd: 0.32,
+  feedbackAdd: 0.20,
+  driveAdd: 0.18,
+  widthTarget: 0.06,
   sheenMax: 0.70,
 
-  // More noticeable wobble
-  pitchCentsMax: 55,     // was 18
-  motionKickMax: 0.55,
+  // wobble + instability (more obvious)
+  pitchCentsMax: 38,       // was 18
+  pitchHz1: 2.6,           // wobble speeds
+  pitchHz2: 4.3,
 
-  // Delay flutter stays, but we’ll keep it slightly tamer
-  delayJitterMsMax: 10,  // was 18
+  // slow-down on touch (actual slowing)
+  slowMin: 0.86,            // playbackRate multiplier at max stress
 
-  // NEW: slowdown
-  minRate: 0.78,         // at max stress, base slows to this
-  rateSmooth: 0.06,      // seconds time constant for slowdown smoothing
+  delayJitterMsMax: 18,     // +/- ms
+  motionKickMax: 0.55,      // extra stress from fast movement
 };
 
 // Drift (autonomous)
@@ -167,7 +169,7 @@ function buildGraph() {
   const lHalf = audioCtx.createGain(); lHalf.gain.value = 0.5;
   const rHalf = audioCtx.createGain(); rHalf.gain.value = 0.5;
 
-  // Filters
+  // FX chain (shared pre width mix)
   const highpass = audioCtx.createBiquadFilter();
   highpass.type = "highpass";
   highpass.frequency.value = BASE.highpassHz;
@@ -191,7 +193,7 @@ function buildGraph() {
   const dryGain = audioCtx.createGain();
   dryGain.gain.value = 1.0;
 
-  // Damping filters inside feedback loop
+  // Damping filters INSIDE the feedback loop
   const echoHP = audioCtx.createBiquadFilter();
   echoHP.type = "highpass";
   echoHP.frequency.value = ECHO_DAMP.hpHz;
@@ -207,8 +209,7 @@ function buildGraph() {
   shaper.curve = makeSoftClipCurve(BASE.drive);
   shaper.oversample = "2x";
 
-  // feedback loop with damping:
-  // delay -> echoHP -> echoLP -> feedback -> delay
+  // feedback loop WITH damping:
   delay.connect(echoHP);
   echoHP.connect(echoLP);
   echoLP.connect(feedback);
@@ -226,6 +227,7 @@ function buildGraph() {
 
   nodes = {
     master,
+    // width
     stereoGain,
     monoGain,
     splitter,
@@ -233,8 +235,10 @@ function buildGraph() {
     monoSum,
     lHalf,
     rHalf,
+    // filters
     highpass,
     lowpass,
+    // delay + damping
     delay,
     feedback,
     echoHP,
@@ -242,6 +246,7 @@ function buildGraph() {
     wetGain,
     dryGain,
     shaper,
+    // out
     widthOut,
   };
 
@@ -277,7 +282,7 @@ function buildSource() {
   nodes.monoSum.connect(nodes.merger, 0, 1);
   nodes.merger.connect(nodes.monoGain);
 
-  // wet stays stereo
+  // wet stays stereo (mono derived from dry)
   nodes.wetGain.connect(nodes.stereoGain);
 
   source = s;
@@ -304,9 +309,6 @@ function togglePlay() {
     if (audioCtx.state === "suspended") audioCtx.resume();
 
     buildSource();
-
-    // Start clean speed
-    source.playbackRate.value = 1.0;
 
     fadeMasterIn();
     source.start(audioCtx.currentTime + 0.02);
@@ -374,6 +376,7 @@ function updateStressFromPointer(e) {
     const vx = (e.clientX - lastPtr.x) / dt;
     const vy = (e.clientY - lastPtr.y) / dt;
     const v = Math.sqrt(vx * vx + vy * vy);
+
     const kick = clamp01((v - 0.10) / 0.55);
     motionKick = Math.max(motionKick, kick * STRESS.motionKickMax);
   }
@@ -390,34 +393,34 @@ function startStressLoop() {
   const step = () => {
     if (!audioCtx || !nodes) return;
 
-    // Smooth approach
     stress += (stressTarget - stress) * 0.10;
     const s = clamp01(stress);
 
-    // decay motionKick over time
     motionKick *= 0.92;
     if (motionKick < 0.001) motionKick = 0;
 
-    // High-pass is now the primary filter gesture (remove mud under pressure)
+    // --- FILTER SHAPE UNDER TOUCH ---
+    // Push HP up (removes boom), pull LP down a bit (removes shrill).
     const hp = BASE.highpassHz + STRESS.highpassAddHz * s;
-    smoothParam(nodes.highpass.frequency, clamp(hp, 30, 4200));
 
-    // Keep lowpass mostly stable; only a gentle reduction for “distance”
-    const lp = BASE.lowpassHz * lerp(1.0, STRESS.lowpassMul, s);
-    smoothParam(nodes.lowpass.frequency, clamp(lp, 1600, 12000));
+    const lpTargetMul = 1 - (1 - STRESS.lowpassMul) * s; // 1..lowpassMul
+    const lp = Math.max(STRESS.lowpassFloorHz, BASE.lowpassHz * lpTargetMul);
 
-    // Echo damping: a bit darker under stress (but not too dark)
+    smoothParam(nodes.highpass.frequency, hp);
+    smoothParam(nodes.lowpass.frequency, lp);
+
+    // Dampen echo more as stress increases
     const echoLp = lerp(ECHO_DAMP.lpHzBase, ECHO_DAMP.lpHzMin, s);
     smoothParam(nodes.echoLP.frequency, echoLp);
 
     // Delay / feedback / wet (bounded)
-    smoothParam(nodes.feedback.gain, clamp(BASE.feedback + STRESS.feedbackAdd * s, 0, 0.28));
-    smoothParam(nodes.wetGain.gain, clamp(BASE.wet + STRESS.wetAdd * s, 0, 0.45));
+    smoothParam(nodes.feedback.gain, clamp(BASE.feedback + STRESS.feedbackAdd * s, 0, 0.35));
+    smoothParam(nodes.wetGain.gain, clamp(BASE.wet + STRESS.wetAdd * s, 0, 0.55));
 
-    // Delay-time jitter under stress
-    const jit = (Math.sin(audioCtx.currentTime * 9.1) + Math.sin(audioCtx.currentTime * 5.7)) * 0.5;
+    // Delay-time jitter under stress (flutter)
+    const jit = (Math.sin(audioCtx.currentTime * 10.7) + Math.sin(audioCtx.currentTime * 6.3)) * 0.5;
     const jitterSec = (jit * STRESS.delayJitterMsMax * s) / 1000;
-    const dt = clamp(BASE.delayTime + jitterSec, 0.015, 0.10);
+    const dt = clamp(BASE.delayTime + jitterSec, 0.015, 0.12);
     smoothParam(nodes.delay.delayTime, dt);
 
     // Drive update
@@ -428,24 +431,22 @@ function startStressLoop() {
     const w = lerp(BASE.width, STRESS.widthTarget, s);
     setWidth(w);
 
-    // Slowdown + more audible wobble (combined)
+    // --- SLOW DOWN + MORE OBVIOUS WOBBLE ---
     if (source) {
-      const baseRate = lerp(1.0, STRESS.minRate, s);
+      const baseSlow = lerp(1.0, STRESS.slowMin, s);
 
-      // slower, deeper wobble (more tape-y)
       const centsMax = STRESS.pitchCentsMax * s;
       const wob =
-        Math.sin(audioCtx.currentTime * 1.25) * 0.65 +
-        Math.sin(audioCtx.currentTime * 2.05) * 0.35;
+        Math.sin(audioCtx.currentTime * STRESS.pitchHz1) * 0.62 +
+        Math.sin(audioCtx.currentTime * STRESS.pitchHz2) * 0.38;
 
       const centsNow = wob * centsMax;
       const wobRate = Math.pow(2, centsNow / 1200);
 
-      const finalRate = clamp(baseRate * wobRate, 0.60, 1.20);
-      source.playbackRate.setTargetAtTime(finalRate, audioCtx.currentTime, STRESS.rateSmooth);
+      const rate = clamp(baseSlow * wobRate, 0.70, 1.15);
+      source.playbackRate.setTargetAtTime(rate, audioCtx.currentTime, 0.035);
     }
 
-    // UI sheen
     if (sheenEl) sheenEl.style.opacity = String(STRESS.sheenMax * s);
 
     rafId = requestAnimationFrame(step);
@@ -471,18 +472,15 @@ function startDrift() {
 
     const t = audioCtx.currentTime - tStart;
 
-    // Lowpass drift (slow)
     const lp = BASE.lowpassHz + Math.sin((2 * Math.PI * t) / DRIFT.lpPeriodSec) * DRIFT.lpDepthHz;
 
-    // Delay warble (idle subtle)
     const warble = (Math.sin((2 * Math.PI * t) / DRIFT.delayWarblePeriodSec) * DRIFT.delayWarbleMs) / 1000;
     const dt = clamp(BASE.delayTime + warble, 0.01, 0.12);
 
-    // Width breathing
     const wb = Math.sin((2 * Math.PI * t) / DRIFT.widthPeriodSec) * DRIFT.widthDepth;
     const width = clamp01(BASE.width + wb);
 
-    // Only apply drift when not stressed
+    // Only drift when not stressed, otherwise touch owns the sound
     if (stress < 0.02) smoothParam(nodes.lowpass.frequency, lp);
     if (stress < 0.02) smoothParam(nodes.delay.delayTime, dt);
     if (stress < 0.02) setWidth(width);
@@ -511,7 +509,6 @@ function lerp(a, b, t) {
 }
 
 function makeSoftClipCurve(amount) {
-  // amount ~ 0.0..0.25
   const n = 44100;
   const curve = new Float32Array(n);
   const k = Math.max(0.0001, amount * 90);

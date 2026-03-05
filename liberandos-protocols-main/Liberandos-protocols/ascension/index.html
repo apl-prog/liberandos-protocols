@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Liberandos: Crossing Field</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="overlay" class="overlay">
+    <div class="panel">
+      <div class="title">LIBERANDOS: CROSSING FIELD</div>
+      <div id="overlayMsg" class="msg">Tap to start</div>
+      <button id="startBtn" class="startBtn">START</button>
+      <div class="hintSmall">Direct the recovery operator to safety</div>
+    </div>
+  </div>
+
+  <main class="shell">
+    <div class="playfield">
+      <canvas id="game" width="512" height="512"></canvas>
+
+      <div class="ui">
+        <div id="status">STANDBY</div>
+        <div id="integrity">INTEGRITY: 100%</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Fixed footer that stays visible on mobile + wraps text -->
+  <footer class="footer">
+    <div class="hintRow">
+      <div class="hintSmall">Direct the Recovery Operator to safety</div>
+      <div class="hintSmall">If you hear nothing, turn Silent Mode off (ringer on).</div>
+
+      <!-- Hidden until ASCENSION (your game.js should unhide #la5Row on win) -->
+      <div class="hintSmall hidden" id="la5Row">
+        <a class="la5" href="https://liberandos.com" target="_blank" rel="noopener">
+          recovery team enter here
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="audio.js?v=1"></script>
+  <script src="game.js?v=1"></script>
+</body>
+</html>

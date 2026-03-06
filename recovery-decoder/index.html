@@ -28,7 +28,7 @@
       color:var(--fg);
       font-family: Georgia, "Times New Roman", serif;
       overscroll-behavior:none;
-      touch-action:none;
+      -webkit-text-size-adjust:100%;
     }
 
     #loading{
@@ -50,6 +50,35 @@
 
     #loading.hidden{
       opacity:0;
+      pointer-events:none;
+    }
+
+    #startGate{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,0.35);
+      z-index:110;
+      opacity:1;
+      transition:opacity 0.5s ease;
+    }
+
+    #startGate.hidden{
+      opacity:0;
+      pointer-events:none;
+    }
+
+    #startGateInner{
+      padding:14px 18px;
+      border:1px solid rgba(255,255,255,0.18);
+      border-radius:999px;
+      background:rgba(255,255,255,0.06);
+      color:rgba(255,255,255,0.78);
+      font-size:12px;
+      letter-spacing:0.14em;
+      text-transform:uppercase;
     }
 
     #field{
@@ -89,6 +118,7 @@
         background 0.25s ease,
         opacity 0.25s ease;
       opacity:0.9;
+      pointer-events:none;
     }
 
     .slot.near{
@@ -120,6 +150,7 @@
       cursor:grab;
       user-select:none;
       -webkit-user-select:none;
+      -webkit-touch-callout:none;
       touch-action:none;
       transform:translate(-50%, -50%);
       background:
@@ -240,6 +271,9 @@
 </head>
 <body>
   <div id="loading">recovering fragments...</div>
+  <div id="startGate" class="hidden">
+    <div id="startGateInner">tap to begin</div>
+  </div>
   <div id="field"></div>
   <div id="veil"></div>
   <div id="message">fully aligned</div>
@@ -257,6 +291,7 @@
     ];
 
     const loading = document.getElementById("loading");
+    const startGate = document.getElementById("startGate");
     const field = document.getElementById("field");
     const message = document.getElementById("message");
 
@@ -291,11 +326,13 @@
       fragments: [],
       slots: [],
       dragged: null,
+      draggedPointerId: null,
       offsetX: 0,
       offsetY: 0,
       revealed: false,
       solvedCount: 0,
-      masterLoops: new Map()
+      masterLoops: new Map(),
+      loadingDone: false
     };
 
     function createImpulseResponse(ctx, seconds, decay){
@@ -314,16 +351,18 @@
     }
 
     async function loadAudioBuffers(){
-      for (const stem of STEMS) {
-        const response = await fetch(`audio/${stem.file}`);
-        if (!response.ok) {
-          throw new Error(`Failed to load ${stem.file}`);
-        }
-        const arrayBuffer = await response.arrayBuffer();
-        const buffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
-        state.buffers.set(stem.file, buffer);
-        state.reversedBuffers.set(stem.file, reverseBuffer(audioCtx, buffer));
-      }
+      await Promise.all(
+        STEMS.map(async (stem) => {
+          const response = await fetch(`audio/${stem.file}`);
+          if (!response.ok) {
+            throw new Error(`Failed to load ${stem.file}`);
+          }
+          const arrayBuffer = await response.arrayBuffer();
+          const buffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+          state.buffers.set(stem.file, buffer);
+          state.reversedBuffers.set(stem.file, reverseBuffer(audioCtx, buffer));
+        })
+      );
     }
 
     function reverseBuffer(ctx, buffer){
@@ -368,7 +407,7 @@
       } = options;
 
       const buffer = reversed ? state.reversedBuffers.get(file) : state.buffers.get(file);
-      if (!buffer) return null;
+      if (!buffer || !audioStarted) return null;
 
       const source = audioCtx.createBufferSource();
       source.buffer = buffer;
@@ -479,7 +518,7 @@
       startingAudioPromise = (async () => {
         await audioCtx.resume();
 
-        GLOBAL_START = audioCtx.currentTime + 0.15;
+        GLOBAL_START = audioCtx.currentTime + 0.2;
 
         for (const stem of STEMS) {
           if (!state.masterLoops.has(stem.file)) {
@@ -494,6 +533,12 @@
       return startingAudioPromise;
     }
 
+    async function beginExperience(){
+      if (!state.loadingDone) return;
+      await ensureAudioStarted();
+      startGate.classList.add("hidden");
+    }
+
     function getViewportPadding(){
       return window.innerWidth < 700 ? 70 : 95;
     }
@@ -504,6 +549,10 @@
 
     function dist(ax, ay, bx, by){
       return Math.hypot(ax - bx, ay - by);
+    }
+
+    function getTouchPoint(touch){
+      return { x: touch.clientX, y: touch.clientY };
     }
 
     function layoutSlots(){
@@ -597,69 +646,122 @@
       });
     }
 
+    function unlockIfBlocked(){
+      if (!startGate.classList.contains("hidden")) return true;
+      return false;
+    }
+
+    function beginDrag(fragment, clientX, clientY){
+      state.dragged = fragment;
+      fragment.el.classList.add("dragging");
+
+      const rect = fragment.el.getBoundingClientRect();
+      state.offsetX = clientX - (rect.left + rect.width / 2);
+      state.offsetY = clientY - (rect.top + rect.height / 2);
+
+      if (fragment.placed) {
+        fragment.placed = false;
+        state.solvedCount = Math.max(0, state.solvedCount - 1);
+        fragment.el.classList.remove("locked");
+        state.slots[fragment.slotIndex].el.classList.remove("solved");
+
+        const masterLoop = state.masterLoops.get(fragment.file);
+        if (masterLoop) {
+          const now = audioCtx.currentTime;
+          masterLoop.gain.gain.cancelScheduledValues(now);
+          masterLoop.gain.gain.setValueAtTime(masterLoop.gain.gain.value, now);
+          masterLoop.gain.gain.linearRampToValueAtTime(0.0001, now + 0.2);
+        }
+      }
+
+      if (!fragment.loopVoice && audioStarted) {
+        fragment.loopVoice = createLoopVoice(fragment.file);
+      }
+
+      updateProximityVisuals(fragment);
+      updateFragmentAudioByDistance(fragment);
+    }
+
+    function dragMove(fragment, clientX, clientY){
+      const x = clamp(clientX - state.offsetX, 40, window.innerWidth - 40);
+      const y = clamp(clientY - state.offsetY, 40, window.innerHeight - 40);
+
+      fragment.x = x;
+      fragment.y = y;
+      fragment.el.style.left = `${x}px`;
+      fragment.el.style.top = `${y}px`;
+
+      updateProximityVisuals(fragment);
+      updateFragmentAudioByDistance(fragment);
+    }
+
     function setupDrag(fragment){
       const el = fragment.el;
 
-      el.addEventListener("pointerdown", async (e) => {
+      el.addEventListener("pointerdown", (e) => {
+        if (unlockIfBlocked()) return;
         e.preventDefault();
-        await ensureAudioStarted();
 
-        state.dragged = fragment;
-        el.classList.add("dragging");
-        el.setPointerCapture(e.pointerId);
+        state.draggedPointerId = e.pointerId;
+        beginDrag(fragment, e.clientX, e.clientY);
 
-        const rect = el.getBoundingClientRect();
-        state.offsetX = e.clientX - (rect.left + rect.width / 2);
-        state.offsetY = e.clientY - (rect.top + rect.height / 2);
-
-        if (fragment.placed) {
-          fragment.placed = false;
-          state.solvedCount = Math.max(0, state.solvedCount - 1);
-          el.classList.remove("locked");
-          state.slots[fragment.slotIndex].el.classList.remove("solved");
-
-          const masterLoop = state.masterLoops.get(fragment.file);
-          if (masterLoop) {
-            const now = audioCtx.currentTime;
-            masterLoop.gain.gain.cancelScheduledValues(now);
-            masterLoop.gain.gain.setValueAtTime(masterLoop.gain.gain.value, now);
-            masterLoop.gain.gain.linearRampToValueAtTime(0.0001, now + 0.2);
-          }
-        }
-
-        if (!fragment.loopVoice) {
-          fragment.loopVoice = createLoopVoice(fragment.file);
-        }
-
-        updateProximityVisuals(fragment);
-        updateFragmentAudioByDistance(fragment);
+        try {
+          el.setPointerCapture(e.pointerId);
+        } catch (_) {}
       });
 
       el.addEventListener("pointermove", (e) => {
         if (state.dragged !== fragment) return;
-
-        const x = clamp(e.clientX - state.offsetX, 40, window.innerWidth - 40);
-        const y = clamp(e.clientY - state.offsetY, 40, window.innerHeight - 40);
-
-        fragment.x = x;
-        fragment.y = y;
-        el.style.left = `${x}px`;
-        el.style.top = `${y}px`;
-
-        updateProximityVisuals(fragment);
-        updateFragmentAudioByDistance(fragment);
+        if (state.draggedPointerId !== null && e.pointerId !== state.draggedPointerId) return;
+        dragMove(fragment, e.clientX, e.clientY);
       });
 
       el.addEventListener("pointerup", (e) => {
         if (state.dragged !== fragment) return;
-        try { el.releasePointerCapture(e.pointerId); } catch (_) {}
+        if (state.draggedPointerId !== null && e.pointerId !== state.draggedPointerId) return;
+        try {
+          el.releasePointerCapture(e.pointerId);
+        } catch (_) {}
+        state.draggedPointerId = null;
         finalizeDrop(fragment);
       });
 
-      el.addEventListener("pointercancel", () => {
+      el.addEventListener("pointercancel", (e) => {
         if (state.dragged !== fragment) return;
+        if (state.draggedPointerId !== null && e.pointerId !== state.draggedPointerId) return;
+        state.draggedPointerId = null;
         finalizeDrop(fragment);
       });
+
+      el.addEventListener("touchstart", (e) => {
+        if (unlockIfBlocked()) return;
+        e.preventDefault();
+
+        const t = e.changedTouches[0];
+        const point = getTouchPoint(t);
+        beginDrag(fragment, point.x, point.y);
+      }, { passive: false });
+
+      el.addEventListener("touchmove", (e) => {
+        if (state.dragged !== fragment) return;
+        e.preventDefault();
+
+        const t = e.changedTouches[0];
+        const point = getTouchPoint(t);
+        dragMove(fragment, point.x, point.y);
+      }, { passive: false });
+
+      el.addEventListener("touchend", (e) => {
+        if (state.dragged !== fragment) return;
+        e.preventDefault();
+        finalizeDrop(fragment);
+      }, { passive: false });
+
+      el.addEventListener("touchcancel", (e) => {
+        if (state.dragged !== fragment) return;
+        e.preventDefault();
+        finalizeDrop(fragment);
+      }, { passive: false });
     }
 
     function updateProximityVisuals(fragment){
@@ -847,13 +949,27 @@
       }
     });
 
+    startGate.addEventListener("pointerdown", async (e) => {
+      e.preventDefault();
+      await beginExperience();
+    });
+
+    startGate.addEventListener("touchstart", async (e) => {
+      e.preventDefault();
+      await beginExperience();
+    }, { passive: false });
+
     async function init(){
       try {
-        await loadAudioBuffers();
         buildScene();
         field.classList.add("ready");
-        loading.classList.add("hidden");
         requestAnimationFrame(animate);
+
+        await loadAudioBuffers();
+
+        state.loadingDone = true;
+        loading.classList.add("hidden");
+        startGate.classList.remove("hidden");
       } catch (err) {
         console.error(err);
         loading.textContent = "audio files not found";

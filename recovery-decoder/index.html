@@ -32,7 +32,7 @@
     }
 
     #loading{
-      position:absolute;
+      position:fixed;
       inset:0;
       display:flex;
       align-items:center;
@@ -44,41 +44,45 @@
       background:
         radial-gradient(circle at center, rgba(0,0,0,0.18), rgba(0,0,0,0.58));
       z-index:100;
-      transition:opacity 0.8s ease;
+      transition:opacity 0.6s ease;
       pointer-events:none;
     }
 
     #loading.hidden{
       opacity:0;
-      pointer-events:none;
     }
 
     #startGate{
-      position:absolute;
+      position:fixed;
       inset:0;
-      display:flex;
+      display:none;
       align-items:center;
       justify-content:center;
       background:rgba(0,0,0,0.35);
-      z-index:110;
-      opacity:1;
-      transition:opacity 0.5s ease;
+      z-index:200;
+      pointer-events:auto;
+      touch-action:manipulation;
     }
 
-    #startGate.hidden{
-      opacity:0;
-      pointer-events:none;
+    #startGate.visible{
+      display:flex;
     }
 
-    #startGateInner{
-      padding:14px 18px;
+    #startGateButton{
+      appearance:none;
+      -webkit-appearance:none;
       border:1px solid rgba(255,255,255,0.18);
       border-radius:999px;
-      background:rgba(255,255,255,0.06);
-      color:rgba(255,255,255,0.78);
+      background:rgba(255,255,255,0.08);
+      color:rgba(255,255,255,0.85);
+      padding:14px 20px;
       font-size:12px;
       letter-spacing:0.14em;
       text-transform:uppercase;
+      pointer-events:auto;
+      touch-action:manipulation;
+      cursor:pointer;
+      font-family:inherit;
     }
 
     #field{
@@ -93,7 +97,7 @@
     }
 
     #veil{
-      position:absolute;
+      position:fixed;
       inset:0;
       pointer-events:none;
       background:
@@ -173,13 +177,6 @@
       z-index:5;
     }
 
-    .fragment:hover{
-      border-color:rgba(255,255,255,0.24);
-      box-shadow:
-        0 10px 34px rgba(0,0,0,0.36),
-        inset 0 0 20px rgba(255,255,255,0.06);
-    }
-
     .fragment.dragging{
       cursor:grabbing;
       z-index:30;
@@ -220,7 +217,7 @@
     }
 
     #message{
-      position:absolute;
+      position:fixed;
       left:50%;
       top:50%;
       transform:translate(-50%, -50%);
@@ -244,7 +241,7 @@
     }
 
     #hint{
-      position:absolute;
+      position:fixed;
       left:24px;
       bottom:20px;
       font-size:10px;
@@ -271,8 +268,8 @@
 </head>
 <body>
   <div id="loading">recovering fragments...</div>
-  <div id="startGate" class="hidden">
-    <div id="startGateInner">tap to begin</div>
+  <div id="startGate">
+    <button id="startGateButton" type="button">loading...</button>
   </div>
   <div id="field"></div>
   <div id="veil"></div>
@@ -292,6 +289,7 @@
 
     const loading = document.getElementById("loading");
     const startGate = document.getElementById("startGate");
+    const startGateButton = document.getElementById("startGateButton");
     const field = document.getElementById("field");
     const message = document.getElementById("message");
 
@@ -326,7 +324,6 @@
       fragments: [],
       slots: [],
       dragged: null,
-      draggedPointerId: null,
       offsetX: 0,
       offsetY: 0,
       revealed: false,
@@ -354,9 +351,7 @@
       await Promise.all(
         STEMS.map(async (stem) => {
           const response = await fetch(`audio/${stem.file}`);
-          if (!response.ok) {
-            throw new Error(`Failed to load ${stem.file}`);
-          }
+          if (!response.ok) throw new Error(`Failed to load ${stem.file}`);
           const arrayBuffer = await response.arrayBuffer();
           const buffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
           state.buffers.set(stem.file, buffer);
@@ -387,7 +382,6 @@
       const curve = new Float32Array(n);
       const k = typeof amount === "number" ? amount : 25;
       const deg = Math.PI / 180;
-
       for (let i = 0; i < n; ++i) {
         const x = i * 2 / n - 1;
         curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
@@ -442,7 +436,6 @@
 
       source.start();
       source.stop(now + tailTime + 0.02);
-
       return source;
     }
 
@@ -467,7 +460,6 @@
       source.connect(filter);
       filter.connect(gain);
       gain.connect(dryBus);
-
       source.start(GLOBAL_START);
 
       return { source, gain, filter };
@@ -494,7 +486,6 @@
       source.connect(filter);
       filter.connect(gain);
       gain.connect(dryBus);
-
       source.start(GLOBAL_START);
 
       return { source, gain, filter };
@@ -508,7 +499,7 @@
         loopVoice.gain.gain.setValueAtTime(loopVoice.gain.gain.value, now);
         loopVoice.gain.gain.linearRampToValueAtTime(0.0001, now + 0.15);
         loopVoice.source.stop(now + 0.18);
-      } catch (e) {}
+      } catch (_) {}
     }
 
     async function ensureAudioStarted(){
@@ -517,7 +508,6 @@
 
       startingAudioPromise = (async () => {
         await audioCtx.resume();
-
         GLOBAL_START = audioCtx.currentTime + 0.2;
 
         for (const stem of STEMS) {
@@ -533,14 +523,11 @@
       return startingAudioPromise;
     }
 
-    async function beginExperience(){
+    async function beginExperience(e){
+      if (e) e.preventDefault();
       if (!state.loadingDone) return;
       await ensureAudioStarted();
-      startGate.classList.add("hidden");
-    }
-
-    function getViewportPadding(){
-      return window.innerWidth < 700 ? 70 : 95;
+      startGate.remove();
     }
 
     function clamp(n, min, max){
@@ -551,8 +538,8 @@
       return Math.hypot(ax - bx, ay - by);
     }
 
-    function getTouchPoint(touch){
-      return { x: touch.clientX, y: touch.clientY };
+    function getViewportPadding(){
+      return window.innerWidth < 700 ? 70 : 95;
     }
 
     function layoutSlots(){
@@ -585,7 +572,6 @@
         const x = pad + Math.random() * (window.innerWidth - pad * 2);
         const y = pad + Math.random() * (window.innerHeight - pad * 2);
         const tooClose = existing.some(p => dist(x, y, p.x, p.y) < 120);
-
         if (!tooClose) return { x, y };
         tries++;
       }
@@ -601,14 +587,7 @@
         const el = document.createElement("div");
         el.className = "slot";
         field.appendChild(el);
-
-        return {
-          id: i,
-          file: stem.file,
-          el,
-          x: 0,
-          y: 0
-        };
+        return { id: i, file: stem.file, el, x: 0, y: 0 };
       });
 
       layoutSlots();
@@ -622,7 +601,6 @@
 
         const pos = randomStartPosition(used);
         used.push(pos);
-
         el.style.left = `${pos.x}px`;
         el.style.top = `${pos.y}px`;
 
@@ -641,14 +619,21 @@
           loopVoice: null
         };
 
-        setupDrag(fragment);
+        el.addEventListener("mousedown", (e) => {
+          if (document.getElementById("startGate")) return;
+          e.preventDefault();
+          beginDrag(fragment, e.clientX, e.clientY);
+        });
+
+        el.addEventListener("touchstart", (e) => {
+          if (document.getElementById("startGate")) return;
+          e.preventDefault();
+          const t = e.changedTouches[0];
+          beginDrag(fragment, t.clientX, t.clientY);
+        }, { passive: false });
+
         return fragment;
       });
-    }
-
-    function unlockIfBlocked(){
-      if (!startGate.classList.contains("hidden")) return true;
-      return false;
     }
 
     function beginDrag(fragment, clientX, clientY){
@@ -682,7 +667,10 @@
       updateFragmentAudioByDistance(fragment);
     }
 
-    function dragMove(fragment, clientX, clientY){
+    function dragMove(clientX, clientY){
+      const fragment = state.dragged;
+      if (!fragment) return;
+
       const x = clamp(clientX - state.offsetX, 40, window.innerWidth - 40);
       const y = clamp(clientY - state.offsetY, 40, window.innerHeight - 40);
 
@@ -695,81 +683,30 @@
       updateFragmentAudioByDistance(fragment);
     }
 
-    function setupDrag(fragment){
-      const el = fragment.el;
+    function endDrag(){
+      const fragment = state.dragged;
+      if (!fragment) return;
 
-      el.addEventListener("pointerdown", (e) => {
-        if (unlockIfBlocked()) return;
-        e.preventDefault();
+      state.dragged = null;
+      fragment.el.classList.remove("dragging");
 
-        state.draggedPointerId = e.pointerId;
-        beginDrag(fragment, e.clientX, e.clientY);
+      const slot = state.slots[fragment.slotIndex];
+      const d = dist(fragment.x, fragment.y, slot.x, slot.y);
 
-        try {
-          el.setPointerCapture(e.pointerId);
-        } catch (_) {}
-      });
-
-      el.addEventListener("pointermove", (e) => {
-        if (state.dragged !== fragment) return;
-        if (state.draggedPointerId !== null && e.pointerId !== state.draggedPointerId) return;
-        dragMove(fragment, e.clientX, e.clientY);
-      });
-
-      el.addEventListener("pointerup", (e) => {
-        if (state.dragged !== fragment) return;
-        if (state.draggedPointerId !== null && e.pointerId !== state.draggedPointerId) return;
-        try {
-          el.releasePointerCapture(e.pointerId);
-        } catch (_) {}
-        state.draggedPointerId = null;
-        finalizeDrop(fragment);
-      });
-
-      el.addEventListener("pointercancel", (e) => {
-        if (state.dragged !== fragment) return;
-        if (state.draggedPointerId !== null && e.pointerId !== state.draggedPointerId) return;
-        state.draggedPointerId = null;
-        finalizeDrop(fragment);
-      });
-
-      el.addEventListener("touchstart", (e) => {
-        if (unlockIfBlocked()) return;
-        e.preventDefault();
-
-        const t = e.changedTouches[0];
-        const point = getTouchPoint(t);
-        beginDrag(fragment, point.x, point.y);
-      }, { passive: false });
-
-      el.addEventListener("touchmove", (e) => {
-        if (state.dragged !== fragment) return;
-        e.preventDefault();
-
-        const t = e.changedTouches[0];
-        const point = getTouchPoint(t);
-        dragMove(fragment, point.x, point.y);
-      }, { passive: false });
-
-      el.addEventListener("touchend", (e) => {
-        if (state.dragged !== fragment) return;
-        e.preventDefault();
-        finalizeDrop(fragment);
-      }, { passive: false });
-
-      el.addEventListener("touchcancel", (e) => {
-        if (state.dragged !== fragment) return;
-        e.preventDefault();
-        finalizeDrop(fragment);
-      }, { passive: false });
+      if (d < 54) {
+        snapToCorrectSlot(fragment, slot);
+      } else {
+        wrongPlacement(fragment, slot);
+        stopLoopVoice(fragment.loopVoice);
+        fragment.loopVoice = null;
+      }
     }
 
     function updateProximityVisuals(fragment){
       const slot = state.slots[fragment.slotIndex];
       const d = dist(fragment.x, fragment.y, slot.x, slot.y);
 
-      const slotNear = d < 150;
-      slot.el.classList.toggle("near", slotNear && !fragment.placed);
+      slot.el.classList.toggle("near", d < 150 && !fragment.placed);
       fragment.el.classList.toggle("proximity", d < 180 && !fragment.placed);
 
       const opacity = clamp(0.52 + (1 - d / 260) * 0.52, 0.5, 1);
@@ -798,25 +735,7 @@
       fragment.loopVoice.filter.frequency.cancelScheduledValues(now);
       fragment.loopVoice.filter.frequency.linearRampToValueAtTime(freqTarget, now + 0.08);
 
-      if (d < closeRadius) {
-        fragment.el.style.opacity = "1";
-      }
-    }
-
-    function finalizeDrop(fragment){
-      state.dragged = null;
-      fragment.el.classList.remove("dragging");
-
-      const slot = state.slots[fragment.slotIndex];
-      const d = dist(fragment.x, fragment.y, slot.x, slot.y);
-
-      if (d < 54) {
-        snapToCorrectSlot(fragment, slot);
-      } else {
-        wrongPlacement(fragment, slot);
-        stopLoopVoice(fragment.loopVoice);
-        fragment.loopVoice = null;
-      }
+      if (d < closeRadius) fragment.el.style.opacity = "1";
     }
 
     function snapToCorrectSlot(fragment, slot){
@@ -898,7 +817,6 @@
       message.classList.add("revealed");
 
       const now = audioCtx.currentTime;
-
       for (const loop of state.masterLoops.values()) {
         if (!loop) continue;
         loop.gain.gain.cancelScheduledValues(now);
@@ -926,9 +844,37 @@
 
         updateProximityVisuals(fragment);
       }
-
       requestAnimationFrame(animate);
     }
+
+    window.addEventListener("mousemove", (e) => {
+      if (!state.dragged) return;
+      dragMove(e.clientX, e.clientY);
+    });
+
+    window.addEventListener("mouseup", () => {
+      if (!state.dragged) return;
+      endDrag();
+    });
+
+    window.addEventListener("touchmove", (e) => {
+      if (!state.dragged) return;
+      e.preventDefault();
+      const t = e.changedTouches[0];
+      dragMove(t.clientX, t.clientY);
+    }, { passive: false });
+
+    window.addEventListener("touchend", (e) => {
+      if (!state.dragged) return;
+      e.preventDefault();
+      endDrag();
+    }, { passive: false });
+
+    window.addEventListener("touchcancel", (e) => {
+      if (!state.dragged) return;
+      e.preventDefault();
+      endDrag();
+    }, { passive: false });
 
     window.addEventListener("resize", () => {
       layoutSlots();
@@ -949,15 +895,8 @@
       }
     });
 
-    startGate.addEventListener("pointerdown", async (e) => {
-      e.preventDefault();
-      await beginExperience();
-    });
-
-    startGate.addEventListener("touchstart", async (e) => {
-      e.preventDefault();
-      await beginExperience();
-    }, { passive: false });
+    startGateButton.addEventListener("click", beginExperience);
+    startGateButton.addEventListener("touchend", beginExperience, { passive: false });
 
     async function init(){
       try {
@@ -969,11 +908,11 @@
 
         state.loadingDone = true;
         loading.classList.add("hidden");
-        startGate.classList.remove("hidden");
+        startGateButton.textContent = "tap to begin";
       } catch (err) {
         console.error(err);
         loading.textContent = "audio files not found";
-        field.classList.add("ready");
+        startGateButton.textContent = "reload";
       }
     }
 

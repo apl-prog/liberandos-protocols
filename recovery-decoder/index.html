@@ -417,8 +417,8 @@
       const source = audioCtx.createBufferSource();
       source.buffer = buffer;
       source.loop = true;
-source.loopStart = 0.01;
-source.loopEnd = Math.max(0.02, buffer.duration - 0.01);
+source.loopStart = 0.004;
+source.loopEnd = Math.max(0.06, buffer.duration - 0.01);
 
       const gain = audioCtx.createGain();
       gain.gain.value = 0.0001;

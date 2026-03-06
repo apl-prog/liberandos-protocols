@@ -55,7 +55,7 @@
     #startGate{
       position:fixed;
       inset:0;
-      display:none;
+      display:flex;
       align-items:center;
       justify-content:center;
       background:rgba(0,0,0,0.35);
@@ -64,8 +64,8 @@
       touch-action:manipulation;
     }
 
-    #startGate.visible{
-      display:flex;
+    #startGate.waiting{
+      display:none;
     }
 
     #startGateButton{
@@ -268,7 +268,7 @@
 </head>
 <body>
   <div id="loading">recovering fragments...</div>
-  <div id="startGate">
+  <div id="startGate" class="waiting">
     <button id="startGateButton" type="button">loading...</button>
   </div>
   <div id="field"></div>
@@ -620,13 +620,13 @@
         };
 
         el.addEventListener("mousedown", (e) => {
-          if (document.getElementById("startGate")) return;
+          if (!audioStarted) return;
           e.preventDefault();
           beginDrag(fragment, e.clientX, e.clientY);
         });
 
         el.addEventListener("touchstart", (e) => {
-          if (document.getElementById("startGate")) return;
+          if (!audioStarted) return;
           e.preventDefault();
           const t = e.changedTouches[0];
           beginDrag(fragment, t.clientX, t.clientY);
@@ -661,6 +661,16 @@
 
       if (!fragment.loopVoice && audioStarted) {
         fragment.loopVoice = createLoopVoice(fragment.file);
+
+        playOneShot(fragment.file, {
+          reversed: false,
+          gainValue: 0.22,
+          rate: 1,
+          withDistortion: false,
+          attack: 0.03,
+          release: 0.6,
+          durationClamp: 1.8
+        });
       }
 
       updateProximityVisuals(fragment);
@@ -730,10 +740,10 @@
       const now = audioCtx.currentTime;
 
       fragment.loopVoice.gain.gain.cancelScheduledValues(now);
-      fragment.loopVoice.gain.gain.linearRampToValueAtTime(gainTarget, now + 0.08);
+      fragment.loopVoice.gain.gain.linearRampToValueAtTime(gainTarget, now + 0.16);
 
       fragment.loopVoice.filter.frequency.cancelScheduledValues(now);
-      fragment.loopVoice.filter.frequency.linearRampToValueAtTime(freqTarget, now + 0.08);
+      fragment.loopVoice.filter.frequency.linearRampToValueAtTime(freqTarget, now + 0.10);
 
       if (d < closeRadius) fragment.el.style.opacity = "1";
     }
@@ -908,10 +918,12 @@
 
         state.loadingDone = true;
         loading.classList.add("hidden");
+        startGate.classList.remove("waiting");
         startGateButton.textContent = "tap to begin";
       } catch (err) {
         console.error(err);
         loading.textContent = "audio files not found";
+        startGate.classList.remove("waiting");
         startGateButton.textContent = "reload";
       }
     }

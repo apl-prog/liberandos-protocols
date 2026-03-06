@@ -233,7 +233,9 @@
     const message = document.getElementById("message");
 
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
+    
+const GLOBAL_START = audioCtx.currentTime + 0.2;
+    
     const masterGain = audioCtx.createGain();
     masterGain.gain.value = 0.9;
     masterGain.connect(audioCtx.destination);
@@ -391,7 +393,9 @@
 
       const source = audioCtx.createBufferSource();
       source.buffer = buffer;
-      source.loop = true;
+     source.loop = true;
+source.loopStart = 0.01;
+source.loopEnd = buffer.duration - 0.01;
 
       const gain = audioCtx.createGain();
       gain.gain.value = 0.0001;
@@ -405,7 +409,7 @@
       filter.connect(gain);
       gain.connect(dryBus);
 
-      source.start();
+      source.start(GLOBAL_START);
 
       return { source, gain, filter };
     }
@@ -416,9 +420,9 @@
 
       const source = audioCtx.createBufferSource();
       source.buffer = buffer;
-      source.loop = true;
-source.loopStart = 0.004;
-source.loopEnd = Math.max(0.06, buffer.duration - 0.01);
+     source.loop = true;
+source.loopStart = 0.01;
+source.loopEnd = buffer.duration - 0.01;
 
       const gain = audioCtx.createGain();
       gain.gain.value = 0.0001;
@@ -432,8 +436,7 @@ source.loopEnd = Math.max(0.06, buffer.duration - 0.01);
       filter.connect(gain);
       gain.connect(dryBus);
 
-      source.start();
-
+     source.start(GLOBAL_START);
       return { source, gain, filter };
     }
 

@@ -13,14 +13,14 @@ if (window.__RDB_AUDIO_LOADED__) {
   const asset = (p) => new URL(p, SCRIPT_BASE).toString();
 
   const STEMS = [
-    { id: "elecgtr",  label: "ELEC GTR", url: asset("audio/elecgtr.m4a"),  base: 0.85 },
-    { id: "gtr",      label: "GTR",      url: asset("audio/gtr.m4a"),      base: 0.82 },
-    { id: "piano",    label: "PIANO",    url: asset("audio/piano.m4a"),    base: 0.75 },
-    { id: "pluckies", label: "PLUCKIES", url: asset("audio/pluckies.m4a"), base: 0.78 },
-    { id: "strings",  label: "STRINGS",  url: asset("audio/strings.m4a"),  base: 0.78 },
-    { id: "vox",      label: "VOX",      url: asset("audio/vox.m4a"),      base: 0.70 },
-    { id: "vox2",     label: "VOX 2",    url: asset("audio/vox2.m4a"),     base: 0.65 },
-  ];
+  { id: "elecgtr",  label: "FRAGMENT A", url: asset("audio/elecgtr.m4a"),  base: 0.85 },
+  { id: "gtr",      label: "FRAGMENT B", url: asset("audio/gtr.m4a"),      base: 0.82 },
+  { id: "piano",    label: "FRAGMENT C", url: asset("audio/piano.m4a"),    base: 0.75 },
+  { id: "pluckies", label: "FRAGMENT D", url: asset("audio/pluckies.m4a"), base: 0.78 },
+  { id: "strings",  label: "FRAGMENT E", url: asset("audio/strings.m4a"),  base: 0.78 },
+  { id: "vox",      label: "FRAGMENT F", url: asset("audio/vox.m4a"),      base: 0.70 },
+  { id: "vox2",     label: "FRAGMENT G", url: asset("audio/vox2.m4a"),     base: 0.65 },
+];
 
   // Tuning
   const RAMP_SEC = 0.12;

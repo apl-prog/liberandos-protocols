@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Liberandos Fragment Field</title>
   <style>
     :root{
@@ -31,10 +31,36 @@
       touch-action:none;
     }
 
+    #loading{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:14px;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,0.65);
+      background:
+        radial-gradient(circle at center, rgba(0,0,0,0.18), rgba(0,0,0,0.58));
+      z-index:100;
+      transition:opacity 0.8s ease;
+      pointer-events:none;
+    }
+
+    #loading.hidden{
+      opacity:0;
+    }
+
     #field{
       position:relative;
       width:100%;
       height:100%;
+      visibility:hidden;
+    }
+
+    #field.ready{
+      visibility:visible;
     }
 
     #veil{
@@ -213,29 +239,34 @@
   </style>
 </head>
 <body>
+  <div id="loading">recovering fragments...</div>
   <div id="field"></div>
   <div id="veil"></div>
   <div id="message">fully aligned</div>
   <div id="hint">place the circles where they belong</div>
 
   <script>
-   const STEMS = [
-  { file: "atmospherestrings.wav", label: "field" },
-  { file: "atmospherestrings2.wav", label: "trace" },
-  { file: "elecgtr.wav", label: "wire" },
-  { file: "gtr.wav", label: "wood" },
-  { file: "piano.wav", label: "glass" },
-  { file: "pluckies.wav", label: "grain" },
-  { file: "stringsmelody.wav", label: "thread" }
-];
+    const STEMS = [
+      { file: "atmospherestrings.wav",  label: "field"  },
+      { file: "atmospherestrings2.wav", label: "trace"  },
+      { file: "elecgtr.wav",            label: "wire"   },
+      { file: "gtr.wav",                label: "wood"   },
+      { file: "piano.wav",              label: "glass"  },
+      { file: "pluckies.wav",           label: "grain"  },
+      { file: "stringsmelody.wav",      label: "thread" }
+    ];
 
+    const loading = document.getElementById("loading");
     const field = document.getElementById("field");
     const message = document.getElementById("message");
 
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    
-const GLOBAL_START = audioCtx.currentTime + 0.2;
-    
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContextCtor();
+
+    let GLOBAL_START = null;
+    let audioStarted = false;
+    let startingAudioPromise = null;
+
     const masterGain = audioCtx.createGain();
     masterGain.gain.value = 0.9;
     masterGain.connect(audioCtx.destination);
@@ -254,8 +285,6 @@ const GLOBAL_START = audioCtx.currentTime + 0.2;
     convolver.connect(reverbGain);
     reverbGain.connect(masterGain);
 
-    let unlockedAudio = false;
-
     const state = {
       buffers: new Map(),
       reversedBuffers: new Map(),
@@ -268,15 +297,6 @@ const GLOBAL_START = audioCtx.currentTime + 0.2;
       solvedCount: 0,
       masterLoops: new Map()
     };
-
-    function resumeAudio(){
-      if (audioCtx.state !== "running") {
-        audioCtx.resume();
-      }
-      unlockedAudio = true;
-    }
-
-    document.addEventListener("pointerdown", resumeAudio, { once:false });
 
     function createImpulseResponse(ctx, seconds, decay){
       const rate = ctx.sampleRate;
@@ -389,13 +409,13 @@ const GLOBAL_START = audioCtx.currentTime + 0.2;
 
     function createLoopVoice(file){
       const buffer = state.buffers.get(file);
-      if (!buffer) return null;
+      if (!buffer || GLOBAL_START === null) return null;
 
       const source = audioCtx.createBufferSource();
       source.buffer = buffer;
-     source.loop = true;
-source.loopStart = 0.01;
-source.loopEnd = buffer.duration - 0.01;
+      source.loop = true;
+      source.loopStart = 0.01;
+      source.loopEnd = Math.max(0.02, buffer.duration - 0.01);
 
       const gain = audioCtx.createGain();
       gain.gain.value = 0.0001;
@@ -416,13 +436,13 @@ source.loopEnd = buffer.duration - 0.01;
 
     function createPersistentStemLoop(file){
       const buffer = state.buffers.get(file);
-      if (!buffer) return null;
+      if (!buffer || GLOBAL_START === null) return null;
 
       const source = audioCtx.createBufferSource();
       source.buffer = buffer;
-     source.loop = true;
-source.loopStart = 0.01;
-source.loopEnd = buffer.duration - 0.01;
+      source.loop = true;
+      source.loopStart = 0.01;
+      source.loopEnd = Math.max(0.02, buffer.duration - 0.01);
 
       const gain = audioCtx.createGain();
       gain.gain.value = 0.0001;
@@ -436,7 +456,8 @@ source.loopEnd = buffer.duration - 0.01;
       filter.connect(gain);
       gain.connect(dryBus);
 
-     source.start(GLOBAL_START);
+      source.start(GLOBAL_START);
+
       return { source, gain, filter };
     }
 
@@ -449,6 +470,28 @@ source.loopEnd = buffer.duration - 0.01;
         loopVoice.gain.gain.linearRampToValueAtTime(0.0001, now + 0.15);
         loopVoice.source.stop(now + 0.18);
       } catch (e) {}
+    }
+
+    async function ensureAudioStarted(){
+      if (audioStarted) return;
+      if (startingAudioPromise) return startingAudioPromise;
+
+      startingAudioPromise = (async () => {
+        await audioCtx.resume();
+
+        GLOBAL_START = audioCtx.currentTime + 0.15;
+
+        for (const stem of STEMS) {
+          if (!state.masterLoops.has(stem.file)) {
+            const loop = createPersistentStemLoop(stem.file);
+            state.masterLoops.set(stem.file, loop);
+          }
+        }
+
+        audioStarted = true;
+      })();
+
+      return startingAudioPromise;
     }
 
     function getViewportPadding(){
@@ -541,8 +584,6 @@ source.loopEnd = buffer.duration - 0.01;
           el,
           x: pos.x,
           y: pos.y,
-          homeX: pos.x,
-          homeY: pos.y,
           slotIndex: i,
           placed: false,
           driftPhase: Math.random() * Math.PI * 2,
@@ -559,10 +600,11 @@ source.loopEnd = buffer.duration - 0.01;
     function setupDrag(fragment){
       const el = fragment.el;
 
-      el.addEventListener("pointerdown", (e) => {
-        resumeAudio();
-        state.dragged = fragment;
+      el.addEventListener("pointerdown", async (e) => {
+        e.preventDefault();
+        await ensureAudioStarted();
 
+        state.dragged = fragment;
         el.classList.add("dragging");
         el.setPointerCapture(e.pointerId);
 
@@ -610,7 +652,7 @@ source.loopEnd = buffer.duration - 0.01;
 
       el.addEventListener("pointerup", (e) => {
         if (state.dragged !== fragment) return;
-        el.releasePointerCapture(e.pointerId);
+        try { el.releasePointerCapture(e.pointerId); } catch (_) {}
         finalizeDrop(fragment);
       });
 
@@ -646,7 +688,6 @@ source.loopEnd = buffer.duration - 0.01;
 
       const gainTarget = 0.0001 + t * 0.42;
       const freqTarget = 1200 + t * 3400;
-
       const now = audioCtx.currentTime;
 
       fragment.loopVoice.gain.gain.cancelScheduledValues(now);
@@ -757,6 +798,7 @@ source.loopEnd = buffer.duration - 0.01;
       const now = audioCtx.currentTime;
 
       for (const loop of state.masterLoops.values()) {
+        if (!loop) continue;
         loop.gain.gain.cancelScheduledValues(now);
         loop.gain.gain.setValueAtTime(loop.gain.gain.value, now);
         loop.gain.gain.linearRampToValueAtTime(0.26, now + 1.2);
@@ -805,23 +847,21 @@ source.loopEnd = buffer.duration - 0.01;
       }
     });
 
-    (async function init(){
+    async function init(){
       try {
         await loadAudioBuffers();
-
-        for (const stem of STEMS) {
-          const loop = createPersistentStemLoop(stem.file);
-          state.masterLoops.set(stem.file, loop);
-        }
-
         buildScene();
+        field.classList.add("ready");
+        loading.classList.add("hidden");
         requestAnimationFrame(animate);
       } catch (err) {
         console.error(err);
-        message.textContent = "audio files not found";
-        message.classList.add("revealed");
+        loading.textContent = "audio files not found";
+        field.classList.add("ready");
       }
-    })();
+    }
+
+    init();
   </script>
 </body>
 </html>

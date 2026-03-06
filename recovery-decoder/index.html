@@ -1,48 +1,790 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Recovery Decoder Bay</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Liberandos Recovery Bay</title>
+  <style>
+    :root{
+      --bg1:#0c0f14;
+      --bg2:#161b22;
+      --fg:rgba(255,255,255,0.92);
+      --soft:rgba(255,255,255,0.12);
+      --soft2:rgba(255,255,255,0.18);
+      --slotSize:112px;
+      --fragSize:82px;
+    }
+
+    *{ box-sizing:border-box; }
+
+    html, body{
+      width:100%;
+      height:100%;
+      margin:0;
+      overflow:hidden;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.04), transparent 30%),
+        radial-gradient(circle at 80% 30%, rgba(255,255,255,0.03), transparent 25%),
+        radial-gradient(circle at 40% 75%, rgba(255,255,255,0.025), transparent 28%),
+        linear-gradient(180deg, var(--bg1), var(--bg2));
+      color:var(--fg);
+      font-family: Georgia, "Times New Roman", serif;
+      overscroll-behavior:none;
+      touch-action:none;
+    }
+
+    #field{
+      position:relative;
+      width:100%;
+      height:100%;
+    }
+
+    #veil{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at center, transparent 0%, transparent 38%, rgba(0,0,0,0.12) 100%);
+      opacity:0.9;
+    }
+
+    .slot{
+      position:absolute;
+      width:var(--slotSize);
+      height:var(--slotSize);
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,0.14);
+      background:rgba(255,255,255,0.025);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.04),
+        0 0 24px rgba(255,255,255,0.02);
+      transform:translate(-50%, -50%);
+      transition:
+        box-shadow 0.25s ease,
+        border-color 0.25s ease,
+        background 0.25s ease,
+        opacity 0.25s ease;
+      opacity:0.9;
+    }
+
+    .slot.near{
+      border-color:rgba(255,255,255,0.28);
+      background:rgba(255,255,255,0.05);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.06),
+        0 0 36px rgba(255,255,255,0.05);
+    }
+
+    .slot.solved{
+      border-color:rgba(255,255,255,0.36);
+      background:rgba(255,255,255,0.08);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.08),
+        0 0 48px rgba(255,255,255,0.06);
+    }
+
+    .fragment{
+      position:absolute;
+      width:var(--fragSize);
+      height:var(--fragSize);
+      border-radius:50%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding:10px;
+      cursor:grab;
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action:none;
+      transform:translate(-50%, -50%);
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,0.16), rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.035) 100%);
+      border:1px solid rgba(255,255,255,0.16);
+      box-shadow:
+        0 8px 30px rgba(0,0,0,0.32),
+        inset 0 0 18px rgba(255,255,255,0.04);
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+      font-size:10px;
+      letter-spacing:0.08em;
+      line-height:1.2;
+      color:rgba(255,255,255,0.8);
+      transition:
+        opacity 0.18s ease,
+        box-shadow 0.18s ease,
+        border-color 0.18s ease,
+        background 0.18s ease;
+      z-index:5;
+    }
+
+    .fragment:hover{
+      border-color:rgba(255,255,255,0.24);
+      box-shadow:
+        0 10px 34px rgba(0,0,0,0.36),
+        inset 0 0 20px rgba(255,255,255,0.06);
+    }
+
+    .fragment.dragging{
+      cursor:grabbing;
+      z-index:30;
+      box-shadow:
+        0 14px 42px rgba(0,0,0,0.42),
+        inset 0 0 20px rgba(255,255,255,0.06);
+    }
+
+    .fragment.locked{
+      z-index:12;
+      border-color:rgba(255,255,255,0.3);
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,0.18), rgba(255,255,255,0.07) 45%, rgba(255,255,255,0.04) 100%);
+      box-shadow:
+        0 10px 38px rgba(0,0,0,0.38),
+        inset 0 0 24px rgba(255,255,255,0.07);
+    }
+
+    .fragment.proximity{
+      border-color:rgba(255,255,255,0.28);
+      box-shadow:
+        0 10px 36px rgba(0,0,0,0.36),
+        0 0 28px rgba(255,255,255,0.04),
+        inset 0 0 22px rgba(255,255,255,0.06);
+    }
+
+    @keyframes gentleJiggle{
+      0%   { transform:translate(-50%, -50%) translate(0px, 0px) rotate(0deg); }
+      20%  { transform:translate(-50%, -50%) translate(1px, -1px) rotate(-0.4deg); }
+      40%  { transform:translate(-50%, -50%) translate(-1px, 1px) rotate(0.35deg); }
+      60%  { transform:translate(-50%, -50%) translate(1px, 0px) rotate(-0.25deg); }
+      80%  { transform:translate(-50%, -50%) translate(0px, 1px) rotate(0.2deg); }
+      100% { transform:translate(-50%, -50%) translate(0px, 0px) rotate(0deg); }
+    }
+
+    .jiggle{
+      animation:gentleJiggle 0.65s ease-in-out 2;
+    }
+
+    #message{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%, -50%);
+      min-width:280px;
+      max-width:72vw;
+      text-align:center;
+      font-size:14px;
+      line-height:1.6;
+      letter-spacing:0.08em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,0.84);
+      opacity:0;
+      pointer-events:none;
+      transition:opacity 1.2s ease;
+      z-index:50;
+      text-shadow:0 0 22px rgba(255,255,255,0.08);
+    }
+
+    #message.revealed{
+      opacity:1;
+    }
+
+    #hint{
+      position:absolute;
+      left:24px;
+      bottom:20px;
+      font-size:10px;
+      letter-spacing:0.14em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,0.34);
+      pointer-events:none;
+      z-index:40;
+    }
+
+    @media (max-width: 700px){
+      :root{
+        --slotSize:92px;
+        --fragSize:72px;
+      }
+      #hint{
+        left:16px;
+        right:16px;
+        bottom:14px;
+        font-size:9px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div id="overlay" class="overlay">
-    <div class="panel">
-      <div class="title">RECOVERY DECODER BAY</div>
-      <div class="msg" id="overlayMsg">Tap START to initialize audio</div>
-      <button id="startBtn" class="startBtn">START</button>
-      <div class="hintSmall">Drag modules into the decoder. Recover the field.</div>
-    </div>
-  </div>
+  <div id="field"></div>
+  <div id="veil"></div>
+  <div id="message">alignment complete</div>
+  <div id="hint">place the circles where they belong</div>
 
-  <main class="wrap">
-    <header class="top">
-      <div class="kicker">BENJIMADA RECOVERY SYSTEM</div>
-      <div class="status" id="status">STANDBY</div>
-    </header>
+  <script>
+    const STEMS = [
+      { file: "atmosphere strings 2.m4a", label: "field" },
+      { file: "atmosphere strings.m4a",  label: "trace" },
+      { file: "elec gtr.m4a",            label: "wire" },
+      { file: "gtr.m4a",                 label: "wood" },
+      { file: "piano.m4a",               label: "glass" },
+      { file: "pluckies.m4a",            label: "grain" },
+      { file: "string melody.m4a",       label: "thread" }
+    ];
 
-    <canvas id="c" width="900" height="560"></canvas>
+    const field = document.getElementById("field");
+    const message = document.getElementById("message");
 
-    <footer class="foot">
-      <div class="row">
-        <div class="small">INTEGRITY:</div>
-        <div class="mono" id="integrity">0/7</div>
-      </div>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-      <div class="row">
-        <div class="small">NOTE:</div>
-        <div class="mono subtle">If you hear nothing on iPhone, switch Silent Mode off.</div>
-      </div>
+    const masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.9;
+    masterGain.connect(audioCtx.destination);
 
-      <div class="row hidden" id="la5Row">
-        <div class="small">RECOVERY TEAM:</div>
-        <a class="la5" href="https://liberandos.com" target="_blank" rel="noopener">recovery team enter here</a>
-      </div>
-    </footer>
-  </main>
+    const dryBus = audioCtx.createGain();
+    dryBus.gain.value = 1.0;
+    dryBus.connect(masterGain);
 
-  <script src="audio.js?v=1"></script>
-  <script src="game.js?v=1"></script>
+    const convolver = audioCtx.createConvolver();
+    convolver.buffer = createImpulseResponse(audioCtx, 2.4, 2.0);
+
+    const reverbGain = audioCtx.createGain();
+    reverbGain.gain.value = 0.15;
+
+    dryBus.connect(convolver);
+    convolver.connect(reverbGain);
+    reverbGain.connect(masterGain);
+
+    let unlockedAudio = false;
+
+    const state = {
+      buffers: new Map(),
+      reversedBuffers: new Map(),
+      fragments: [],
+      slots: [],
+      dragged: null,
+      offsetX: 0,
+      offsetY: 0,
+      revealed: false,
+      solvedCount: 0,
+      activePreview: null
+    };
+
+    function resumeAudio(){
+      if (!unlockedAudio && audioCtx.state !== "running") {
+        audioCtx.resume();
+      }
+      unlockedAudio = true;
+    }
+
+    document.addEventListener("pointerdown", resumeAudio, { once:false });
+
+    function createImpulseResponse(ctx, seconds, decay){
+      const rate = ctx.sampleRate;
+      const length = Math.floor(rate * seconds);
+      const impulse = ctx.createBuffer(2, length, rate);
+
+      for (let ch = 0; ch < 2; ch++) {
+        const data = impulse.getChannelData(ch);
+        for (let i = 0; i < length; i++) {
+          const n = i / length;
+          data[i] = (Math.random() * 2 - 1) * Math.pow(1 - n, decay);
+        }
+      }
+      return impulse;
+    }
+
+    async function loadAudioBuffers(){
+      for (const stem of STEMS) {
+        const url = `audio/${encodeURIComponent(stem.file).replace(/%20/g, " ")}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`Failed to load ${stem.file}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
+        state.buffers.set(stem.file, buffer);
+        state.reversedBuffers.set(stem.file, reverseBuffer(audioCtx, buffer));
+      }
+    }
+
+    function reverseBuffer(ctx, buffer){
+      const reversed = ctx.createBuffer(
+        buffer.numberOfChannels,
+        buffer.length,
+        buffer.sampleRate
+      );
+
+      for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+        const src = buffer.getChannelData(ch);
+        const dst = reversed.getChannelData(ch);
+        for (let i = 0, j = src.length - 1; i < src.length; i++, j--) {
+          dst[i] = src[j];
+        }
+      }
+      return reversed;
+    }
+
+    function makeDistortionCurve(amount = 25){
+      const n = 44100;
+      const curve = new Float32Array(n);
+      const k = typeof amount === "number" ? amount : 25;
+      const deg = Math.PI / 180;
+
+      for (let i = 0; i < n; ++i) {
+        const x = i * 2 / n - 1;
+        curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
+      }
+      return curve;
+    }
+
+    function playOneShot(file, options = {}){
+      const {
+        reversed = false,
+        gainValue = 0.45,
+        rate = 1,
+        withDistortion = false,
+        attack = 0.01,
+        release = 0.12,
+        durationClamp = null
+      } = options;
+
+      const buffer = reversed ? state.reversedBuffers.get(file) : state.buffers.get(file);
+      if (!buffer) return null;
+
+      const source = audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.playbackRate.value = rate;
+
+      const gain = audioCtx.createGain();
+      const now = audioCtx.currentTime;
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.linearRampToValueAtTime(gainValue, now + attack);
+
+      let tailTime = buffer.duration / Math.max(rate, 0.01);
+      if (durationClamp) tailTime = Math.min(tailTime, durationClamp);
+
+      gain.gain.setValueAtTime(gainValue, now + Math.max(0.03, tailTime - release));
+      gain.gain.linearRampToValueAtTime(0.0001, now + tailTime);
+
+      source.connect(gain);
+
+      if (withDistortion) {
+        const shaper = audioCtx.createWaveShaper();
+        const filter = audioCtx.createBiquadFilter();
+        shaper.curve = makeDistortionCurve(18);
+        shaper.oversample = "4x";
+        filter.type = "lowpass";
+        filter.frequency.value = 1800;
+        gain.connect(shaper);
+        shaper.connect(filter);
+        filter.connect(dryBus);
+      } else {
+        gain.connect(dryBus);
+      }
+
+      source.start();
+      source.stop(now + tailTime + 0.02);
+
+      return source;
+    }
+
+    function createLoopVoice(file){
+      const buffer = state.buffers.get(file);
+      if (!buffer) return null;
+
+      const source = audioCtx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+
+      const gain = audioCtx.createGain();
+      gain.gain.value = 0.0001;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 3400;
+      filter.Q.value = 0.6;
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(dryBus);
+
+      source.start();
+
+      return { source, gain, filter };
+    }
+
+    function stopLoopVoice(loopVoice){
+      if (!loopVoice) return;
+      const now = audioCtx.currentTime;
+      try {
+        loopVoice.gain.gain.cancelScheduledValues(now);
+        loopVoice.gain.gain.setValueAtTime(loopVoice.gain.gain.value, now);
+        loopVoice.gain.gain.linearRampToValueAtTime(0.0001, now + 0.15);
+        loopVoice.source.stop(now + 0.18);
+      } catch (e) {}
+    }
+
+    function getViewportPadding(){
+      return window.innerWidth < 700 ? 70 : 95;
+    }
+
+    function clamp(n, min, max){
+      return Math.min(max, Math.max(min, n));
+    }
+
+    function dist(ax, ay, bx, by){
+      return Math.hypot(ax - bx, ay - by);
+    }
+
+    function layoutSlots(){
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      const points = [
+        [0.18, 0.28],
+        [0.40, 0.20],
+        [0.67, 0.24],
+        [0.82, 0.43],
+        [0.68, 0.70],
+        [0.39, 0.77],
+        [0.17, 0.58]
+      ];
+
+      state.slots.forEach((slot, i) => {
+        slot.x = points[i][0] * w;
+        slot.y = points[i][1] * h;
+        slot.el.style.left = `${slot.x}px`;
+        slot.el.style.top = `${slot.y}px`;
+      });
+    }
+
+    function randomStartPosition(existing = []){
+      const pad = getViewportPadding();
+      let tries = 0;
+
+      while (tries < 200) {
+        const x = pad + Math.random() * (window.innerWidth - pad * 2);
+        const y = pad + Math.random() * (window.innerHeight - pad * 2);
+        const tooClose = existing.some(p => dist(x, y, p.x, p.y) < 120);
+
+        if (!tooClose) return { x, y };
+        tries++;
+      }
+
+      return {
+        x: pad + Math.random() * (window.innerWidth - pad * 2),
+        y: pad + Math.random() * (window.innerHeight - pad * 2)
+      };
+    }
+
+    function buildScene(){
+      state.slots = STEMS.map((stem, i) => {
+        const el = document.createElement("div");
+        el.className = "slot";
+        field.appendChild(el);
+
+        return {
+          id: i,
+          file: stem.file,
+          el,
+          x: 0,
+          y: 0
+        };
+      });
+
+      layoutSlots();
+
+      const used = [];
+      state.fragments = STEMS.map((stem, i) => {
+        const el = document.createElement("div");
+        el.className = "fragment";
+        el.textContent = stem.label;
+        field.appendChild(el);
+
+        const pos = randomStartPosition(used);
+        used.push(pos);
+
+        el.style.left = `${pos.x}px`;
+        el.style.top = `${pos.y}px`;
+
+        const fragment = {
+          id: i,
+          file: stem.file,
+          label: stem.label,
+          el,
+          x: pos.x,
+          y: pos.y,
+          homeX: pos.x,
+          homeY: pos.y,
+          slotIndex: i,
+          placed: false,
+          hoveringNear: false,
+          driftPhase: Math.random() * Math.PI * 2,
+          driftSpeed: 0.0005 + Math.random() * 0.00055,
+          driftRadius: 8 + Math.random() * 10,
+          loopVoice: null
+        };
+
+        setupDrag(fragment);
+        return fragment;
+      });
+    }
+
+    function setupDrag(fragment){
+      const el = fragment.el;
+
+      el.addEventListener("pointerdown", (e) => {
+        resumeAudio();
+        state.dragged = fragment;
+
+        el.classList.add("dragging");
+        el.setPointerCapture(e.pointerId);
+
+        const rect = el.getBoundingClientRect();
+        state.offsetX = e.clientX - (rect.left + rect.width / 2);
+        state.offsetY = e.clientY - (rect.top + rect.height / 2);
+
+        if (fragment.placed) {
+          fragment.placed = false;
+          state.solvedCount = Math.max(0, state.solvedCount - 1);
+          el.classList.remove("locked");
+          state.slots[fragment.slotIndex].el.classList.remove("solved");
+        }
+
+        if (!fragment.loopVoice) {
+          fragment.loopVoice = createLoopVoice(fragment.file);
+        }
+
+        updateFragmentAudioByDistance(fragment);
+      });
+
+      el.addEventListener("pointermove", (e) => {
+        if (state.dragged !== fragment) return;
+
+        const x = clamp(e.clientX - state.offsetX, 40, window.innerWidth - 40);
+        const y = clamp(e.clientY - state.offsetY, 40, window.innerHeight - 40);
+
+        fragment.x = x;
+        fragment.y = y;
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+
+        updateProximityVisuals(fragment);
+        updateFragmentAudioByDistance(fragment);
+      });
+
+      el.addEventListener("pointerup", (e) => {
+        if (state.dragged !== fragment) return;
+        el.releasePointerCapture(e.pointerId);
+        finalizeDrop(fragment);
+      });
+
+      el.addEventListener("pointercancel", () => {
+        if (state.dragged !== fragment) return;
+        finalizeDrop(fragment);
+      });
+    }
+
+    function updateProximityVisuals(fragment){
+      const slot = state.slots[fragment.slotIndex];
+      const d = dist(fragment.x, fragment.y, slot.x, slot.y);
+
+      const slotNear = d < 150;
+      slot.el.classList.toggle("near", slotNear && !fragment.placed);
+      fragment.el.classList.toggle("proximity", d < 180 && !fragment.placed);
+
+      const opacity = clamp(0.52 + (1 - d / 260) * 0.52, 0.5, 1);
+      fragment.el.style.opacity = opacity.toFixed(3);
+    }
+
+    function updateFragmentAudioByDistance(fragment){
+      if (!fragment.loopVoice) return;
+
+      const slot = state.slots[fragment.slotIndex];
+      const d = dist(fragment.x, fragment.y, slot.x, slot.y);
+
+      const nearRadius = 260;
+      const closeRadius = 60;
+
+      let t = 1 - clamp(d / nearRadius, 0, 1);
+      t = Math.pow(t, 1.8);
+
+      const gainTarget = 0.0001 + t * 0.42;
+      const freqTarget = 1200 + t * 3400;
+
+      const now = audioCtx.currentTime;
+
+      fragment.loopVoice.gain.gain.cancelScheduledValues(now);
+      fragment.loopVoice.gain.gain.linearRampToValueAtTime(gainTarget, now + 0.08);
+
+      fragment.loopVoice.filter.frequency.cancelScheduledValues(now);
+      fragment.loopVoice.filter.frequency.linearRampToValueAtTime(freqTarget, now + 0.08);
+
+      if (d < closeRadius) {
+        fragment.el.style.opacity = "1";
+      }
+    }
+
+    function finalizeDrop(fragment){
+      state.dragged = null;
+      fragment.el.classList.remove("dragging");
+
+      const slot = state.slots[fragment.slotIndex];
+      const d = dist(fragment.x, fragment.y, slot.x, slot.y);
+
+      if (d < 54) {
+        snapToCorrectSlot(fragment, slot);
+      } else {
+        wrongPlacement(fragment, slot);
+      }
+
+      stopLoopVoice(fragment.loopVoice);
+      fragment.loopVoice = null;
+    }
+
+    function snapToCorrectSlot(fragment, slot){
+      fragment.x = slot.x;
+      fragment.y = slot.y;
+      fragment.el.style.left = `${slot.x}px`;
+      fragment.el.style.top = `${slot.y}px`;
+      fragment.placed = true;
+      fragment.el.classList.add("locked");
+      fragment.el.classList.remove("proximity");
+      fragment.el.style.opacity = "1";
+      slot.el.classList.remove("near");
+      slot.el.classList.add("solved");
+
+      playOneShot(fragment.file, {
+        reversed: false,
+        gainValue: 0.42,
+        rate: 1,
+        withDistortion: false,
+        attack: 0.01,
+        release: 0.18,
+        durationClamp: 1.7
+      });
+
+      state.solvedCount += 1;
+
+      if (state.solvedCount === STEMS.length && !state.revealed) {
+        revealCompletion();
+      }
+    }
+
+    function wrongPlacement(fragment, correctSlot){
+      fragment.el.classList.add("jiggle");
+      correctSlot.el.classList.remove("near");
+      fragment.el.classList.remove("proximity");
+
+      playOneShot(fragment.file, {
+        reversed: true,
+        gainValue: 0.24,
+        rate: 0.95,
+        withDistortion: true,
+        attack: 0.02,
+        release: 0.2,
+        durationClamp: 1.0
+      });
+
+      setTimeout(() => {
+        const nudgeX = (Math.random() * 26) - 13;
+        const nudgeY = (Math.random() * 26) - 13;
+
+        fragment.x = clamp(fragment.x + nudgeX, 42, window.innerWidth - 42);
+        fragment.y = clamp(fragment.y + nudgeY, 42, window.innerHeight - 42);
+
+        fragment.el.style.left = `${fragment.x}px`;
+        fragment.el.style.top = `${fragment.y}px`;
+        fragment.el.classList.remove("jiggle");
+
+        updateProximityVisuals(fragment);
+      }, 950);
+    }
+
+    function revealCompletion(){
+      state.revealed = true;
+
+      const now = audioCtx.currentTime;
+      const finalGain = audioCtx.createGain();
+      finalGain.gain.value = 0.0001;
+      finalGain.connect(dryBus);
+
+      STEMS.forEach((stem, i) => {
+        const buffer = state.buffers.get(stem.file);
+        if (!buffer) return;
+
+        const src = audioCtx.createBufferSource();
+        src.buffer = buffer;
+        src.loop = true;
+
+        const g = audioCtx.createGain();
+        g.gain.value = 0.0001;
+
+        src.connect(g);
+        g.connect(finalGain);
+
+        src.start(now + i * 0.03);
+
+        g.gain.setValueAtTime(0.0001, now + i * 0.03);
+        g.gain.linearRampToValueAtTime(0.14, now + 1.6 + i * 0.03);
+      });
+
+      finalGain.gain.setValueAtTime(0.0001, now);
+      finalGain.gain.linearRampToValueAtTime(0.95, now + 2.4);
+
+      message.classList.add("revealed");
+    }
+
+    function animate(ts){
+      for (const fragment of state.fragments) {
+        if (state.dragged === fragment) continue;
+        if (fragment.placed) continue;
+
+        const driftX = Math.cos(ts * fragment.driftSpeed + fragment.driftPhase) * fragment.driftRadius * 0.018;
+        const driftY = Math.sin(ts * fragment.driftSpeed * 0.82 + fragment.driftPhase * 1.2) * fragment.driftRadius * 0.018;
+
+        fragment.x = clamp(fragment.x + driftX, 40, window.innerWidth - 40);
+        fragment.y = clamp(fragment.y + driftY, 40, window.innerHeight - 40);
+
+        fragment.el.style.left = `${fragment.x}px`;
+        fragment.el.style.top = `${fragment.y}px`;
+
+        updateProximityVisuals(fragment);
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    window.addEventListener("resize", () => {
+      layoutSlots();
+
+      for (const fragment of state.fragments) {
+        fragment.x = clamp(fragment.x, 40, window.innerWidth - 40);
+        fragment.y = clamp(fragment.y, 40, window.innerHeight - 40);
+        fragment.el.style.left = `${fragment.x}px`;
+        fragment.el.style.top = `${fragment.y}px`;
+
+        if (fragment.placed) {
+          const slot = state.slots[fragment.slotIndex];
+          fragment.x = slot.x;
+          fragment.y = slot.y;
+          fragment.el.style.left = `${slot.x}px`;
+          fragment.el.style.top = `${slot.y}px`;
+        }
+      }
+    });
+
+    (async function init(){
+      try {
+        await loadAudioBuffers();
+        buildScene();
+        requestAnimationFrame(animate);
+      } catch (err) {
+        console.error(err);
+        message.textContent = "audio files not found";
+        message.classList.add("revealed");
+      }
+    })();
+  </script>
 </body>
 </html>

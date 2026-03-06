@@ -230,35 +230,57 @@
       text-transform:uppercase;
       color:rgba(255,255,255,0.84);
       opacity:0;
-      pointer-events:none;
+      pointer-events:auto;
       transition:opacity 1.2s ease;
       z-index:50;
       text-shadow:0 0 22px rgba(255,255,255,0.08);
     }
-    .message-main{
-  margin-bottom:10px;
-}
-
-.message-link{
-  display:inline-block;
-  font-size:11px;
-  letter-spacing:0.14em;
-  text-transform:uppercase;
-  color:rgba(255,255,255,0.72);
-  text-decoration:none;
-  border-bottom:1px solid rgba(255,255,255,0.22);
-  padding-bottom:2px;
-  pointer-events:auto;
-}
-
-.message-link:hover,
-.message-link:focus{
-  color:rgba(255,255,255,0.92);
-  border-bottom-color:rgba(255,255,255,0.5);
-}
 
     #message.revealed{
       opacity:1;
+    }
+
+    .message-main{
+      margin-bottom:10px;
+    }
+
+    .message-link{
+      display:inline-block;
+      font-size:11px;
+      letter-spacing:0.14em;
+      text-transform:uppercase;
+      color:rgba(255,255,255,0.72);
+      text-decoration:none;
+      border-bottom:1px solid rgba(255,255,255,0.22);
+      padding-bottom:2px;
+      pointer-events:auto;
+      opacity:0;
+      transition:
+        opacity 1.2s ease,
+        color 0.25s ease,
+        border-bottom-color 0.25s ease;
+    }
+
+    .message-link.visible{
+      opacity:1;
+      animation:signalFlicker 0.9s ease 1;
+    }
+
+    .message-link:hover,
+    .message-link:focus{
+      color:rgba(255,255,255,0.92);
+      border-bottom-color:rgba(255,255,255,0.5);
+    }
+
+    @keyframes signalFlicker{
+      0%   { opacity:0; }
+      10%  { opacity:0.15; }
+      20%  { opacity:0.02; }
+      35%  { opacity:0.55; }
+      45%  { opacity:0.18; }
+      60%  { opacity:0.82; }
+      72%  { opacity:0.38; }
+      100% { opacity:1; }
     }
 
     #hint{
@@ -292,19 +314,23 @@
   <div id="startGate" class="waiting">
     <button id="startGateButton" type="button">loading...</button>
   </div>
+
   <div id="field"></div>
   <div id="veil"></div>
- <div id="message">
-  <div class="message-main">fully aligned</div>
-  <a
-    class="message-link"
-    href="https://protocols.liberandos.com/Archive/aps/"
-    target="_blank"
-    rel="noopener noreferrer"
-  >
-    Recovery Team: LA5
-  </a>
-</div>
+
+  <div id="message">
+    <div class="message-main">fully aligned</div>
+    <a
+      id="recoveryLink"
+      class="message-link"
+      href="https://protocols.liberandos.com/Archive/aps/"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Recovery Team: LA5
+    </a>
+  </div>
+
   <div id="hint">place the circles where they belong</div>
 
   <script>
@@ -323,6 +349,7 @@
     const startGateButton = document.getElementById("startGateButton");
     const field = document.getElementById("field");
     const message = document.getElementById("message");
+    const recoveryLink = document.getElementById("recoveryLink");
 
     const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContextCtor();
@@ -330,6 +357,7 @@
     let GLOBAL_START = null;
     let audioStarted = false;
     let startingAudioPromise = null;
+    let recoveryRevealTimer = null;
 
     const masterGain = audioCtx.createGain();
     masterGain.gain.value = 0.9;
@@ -855,6 +883,11 @@
     function revealCompletion(){
       state.revealed = true;
       message.classList.add("revealed");
+
+      if (recoveryRevealTimer) clearTimeout(recoveryRevealTimer);
+      recoveryRevealTimer = setTimeout(() => {
+        recoveryLink.classList.add("visible");
+      }, 1200);
 
       const now = audioCtx.currentTime;
       for (const loop of state.masterLoops.values()) {

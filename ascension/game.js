@@ -147,13 +147,13 @@ function spawnObstacles(){
   let obstaclesPerRow;
 
   if (round === 1) {
-    baseSpeed = 0.026;
+    baseSpeed = 0.035;
     obstaclesPerRow = 1;
   } else if (round === 2) {
-    baseSpeed = 0.034;
-    obstaclesPerRow = 1;
+    baseSpeed = 0.043;
+    obstaclesPerRow = 2;
   } else {
-    baseSpeed = 0.040;
+    baseSpeed = 0.050;
     obstaclesPerRow = 2;
   }
 

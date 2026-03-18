@@ -147,19 +147,19 @@ function spawnObstacles(){
   let obstaclesPerRow;
 
   if (round === 1) {
-    baseSpeed = 0.035;
+    baseSpeed = 0.040;
     obstaclesPerRow = 1;
   } else if (round === 2) {
-    baseSpeed = 0.043;
+    baseSpeed = 0.047;
     obstaclesPerRow = 2;
   } else {
-    baseSpeed = 0.050;
-    obstaclesPerRow = 2;
+    baseSpeed = 0.059;
+    obstaclesPerRow = 3;
   }
 
   for (let y = 2; y < 14; y += 2){
     const dir = ((y / 2) % 2 === 0) ? 1 : -1;
-    const laneVar = 0.90 + ((y % 6) * 0.04);
+    const laneVar = 0.82 + ((y % 6) * 0.04);
     const laneSpeed = baseSpeed * laneVar;
 
     for (let i = 0; i < obstaclesPerRow; i++){

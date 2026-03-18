@@ -178,7 +178,7 @@ function spawnObstacles(){
 }
 
 function updateIntegrityUI(){
-  const integrity = Math.max(0, 100 - deaths * 15);
+  const integrity = Math.max(0, 100 - deaths * 33);
   document.getElementById("integrity").textContent = "INTEGRITY: " + integrity + "%";
   return integrity;
 }
@@ -293,15 +293,7 @@ function draw(){
 
   const pulse = 1 + 0.03 * Math.sin((2 * Math.PI * t) / 1.6);
 
-  ctx.fillStyle = "rgba(230,230,230,0.95)";
-  ctx.textAlign = "center";
-
-  ctx.font = `${Math.round(16 * pulse)}px monospace`;
-  ctx.fillText("ASCENDED", canvas.width / 2, canvas.height / 2);
-
-  ctx.font = "12px monospace";
-  ctx.fillStyle = "rgba(230,230,230,0.70)";
-  ctx.fillText("ACCESS GRANTED", canvas.width / 2, canvas.height / 2 + 18);
+ 
 }
 
 function loop(){

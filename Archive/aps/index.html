@@ -70,7 +70,10 @@
     font-size:12px;
   }
 
-  .nav a{ text-decoration:none; margin-right:12px; }
+  .nav a{
+    text-decoration:none;
+    margin-right:12px;
+  }
 
   .content{
     background:#ffffff;
@@ -178,7 +181,7 @@
     z-index:9999;
     display:grid;
     place-items:center;
-    background:rgba(0,0,0,0.86);
+    background:#000;
   }
 
   .codeGate.hidden{
@@ -279,9 +282,7 @@
   <div class="codePanel">
     <div class="codeInner">
       <div class="codeTitle">APS / ION PROTOCOL ACCESS</div>
-      <div class="codeText">
-        Enter access code to continue
-      </div>
+      <div class="codeText">Enter access code to continue</div>
 
       <input
         id="codeInput"
@@ -505,10 +506,10 @@
           END OF DOCUMENT :: BM-APS-ION-01 :: REV 2.4 :: PRINTED COPIES ARE UNCONTROLLED
         </div>
 
-      </div>
-    </div>
-  </div>
-</div>
+      </div><!-- /content -->
+    </div><!-- /chrome-inner -->
+  </div><!-- /chrome-outer -->
+</div><!-- /page -->
 
 <script>
 (function () {

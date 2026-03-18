@@ -56,7 +56,25 @@ canvas{
   letter-spacing: 1px;
   pointer-events: none;
 }
+.instructionBlock{
+  position: absolute;
+  bottom: -46px; /* adjust if needed */
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+}
 
+.instruction{
+  font-size: 12px;
+  color: rgba(230,230,230,0.75);
+  margin-bottom: 4px;
+}
+
+.instructionSub{
+  font-size: 10px;
+  color: rgba(230,230,230,0.45);
+}
 #status{
   margin-bottom: 4px;
   opacity: 0.85;

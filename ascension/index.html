@@ -12,7 +12,6 @@
       <div class="title">LIBERANDOS: CROSSING FIELD</div>
       <div id="overlayMsg" class="msg">Tap to start</div>
       <button id="startBtn" class="startBtn">START</button>
-      <div class="hintSmall">Direct the recovery operator to safety</div>
     </div>
   </div>
 
@@ -24,25 +23,32 @@
         <div id="status">STANDBY</div>
         <div id="integrity">INTEGRITY: 100%</div>
       </div>
+
+      <div class="instruction" id="instruction">
+        Move the red Recovery Operator to safety 3 times to Ascend
+      </div>
+
+      <div class="ascendPanel hidden" id="ascendPanel">
+        <div class="ascendTitle">You have Ascended.</div>
+        <div class="ascendCode">Access code: 93M</div>
+        <div class="ascendNote">Press EXECUTE to access the training manual</div>
+        <a
+          class="executeBtn"
+          href="https://protocols.liberandos.com/Archive/aps/"
+          target="_blank"
+          rel="noopener"
+        >EXECUTE</a>
+      </div>
     </div>
   </main>
 
-  <!-- Fixed footer that stays visible on mobile + wraps text -->
   <footer class="footer">
     <div class="hintRow">
-      <div class="hintSmall">Direct the Recovery Operator to safety</div>
       <div class="hintSmall">If you hear nothing, turn Silent Mode off (ringer on).</div>
-
-      <!-- Hidden until ASCENSION (your game.js should unhide #la5Row on win) -->
-      <div class="hintSmall hidden" id="la5Row">
-        <a class="la5" href="https://protocols.liberandos.com/Archive/aps/" target="_blank" rel="noopener">
-          recovery team enter here
-        </a>
-      </div>
     </div>
   </footer>
 
   <script src="audio.js?v=1"></script>
-  <script src="game.js?v=1"></script>
+  <script src="game.js?v=2"></script>
 </body>
 </html>

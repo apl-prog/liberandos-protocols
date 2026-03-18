@@ -170,12 +170,103 @@
     font-size:12px;
   }
 
+  /* ===== Access gate ===== */
+
+  .codeGate{
+    position:fixed;
+    inset:0;
+    z-index:9999;
+    display:grid;
+    place-items:center;
+    background:rgba(0,0,0,0.86);
+  }
+
+  .codeGate.hidden{
+    display:none;
+  }
+
+  .codePanel{
+    width:min(420px, calc(100% - 40px));
+    background:#d9d9d9;
+    border-top:2px solid #ffffff;
+    border-left:2px solid #ffffff;
+    border-right:2px solid #6f6f6f;
+    border-bottom:2px solid #6f6f6f;
+    padding:6px;
+  }
+
+  .codeInner{
+    background:#efefef;
+    border-top:2px solid #ffffff;
+    border-left:2px solid #ffffff;
+    border-right:2px solid #8a8a8a;
+    border-bottom:2px solid #8a8a8a;
+    padding:16px 14px;
+    text-align:center;
+  }
+
+  .codeTitle{
+    background:#003366;
+    color:#fff;
+    padding:8px 10px;
+    font-weight:bold;
+    letter-spacing:0.5px;
+    margin:-16px -14px 14px -14px;
+  }
+
+  .codeText{
+    font-family:"Courier New", Courier, monospace;
+    font-size:12px;
+    color:#111;
+    margin-bottom:12px;
+    line-height:1.5;
+  }
+
+  .codeInput{
+    width:100%;
+    box-sizing:border-box;
+    border:1px solid #7a7a7a;
+    background:#fff;
+    color:#000;
+    padding:10px 12px;
+    font-size:16px;
+    text-align:center;
+    letter-spacing:2px;
+    font-family:"Courier New", Courier, monospace;
+    text-transform:uppercase;
+  }
+
+  .codeSubmit{
+    margin-top:12px;
+    background:#dcdcdc;
+    border-top:2px solid #ffffff;
+    border-left:2px solid #ffffff;
+    border-right:2px solid #7a7a7a;
+    border-bottom:2px solid #7a7a7a;
+    padding:6px 14px;
+    cursor:pointer;
+    font-family:Arial, Helvetica, sans-serif;
+    font-size:12px;
+    font-weight:bold;
+  }
+
+  .codeError{
+    margin-top:10px;
+    font-family:"Courier New", Courier, monospace;
+    font-size:12px;
+    color:#990000;
+  }
+
+  .hidden{
+    display:none;
+  }
+
   /* Print cleanly on paper */
   @media print {
     body{ background:#fff; }
     .page{ width:auto; margin:0; }
     .chrome-outer, .chrome-inner, .content{ border:none; }
-    .masthead, .subhead, .nav, .printbar{ display:none; }
+    .masthead, .subhead, .nav, .printbar, .codeGate{ display:none; }
     .figure{ background:#fff; border:1px solid #000; }
     a{ color:#000; text-decoration:none; }
   }
@@ -183,6 +274,31 @@
 </head>
 
 <body>
+
+<div id="codeGate" class="codeGate">
+  <div class="codePanel">
+    <div class="codeInner">
+      <div class="codeTitle">APS / ION PROTOCOL ACCESS</div>
+      <div class="codeText">
+        Enter access code to continue
+      </div>
+
+      <input
+        id="codeInput"
+        class="codeInput"
+        type="text"
+        autocomplete="off"
+        autocapitalize="characters"
+        spellcheck="false"
+        maxlength="3"
+        placeholder="CODE"
+      />
+
+      <button id="codeSubmit" class="codeSubmit">EXECUTE</button>
+      <div id="codeError" class="codeError hidden">Invalid code</div>
+    </div>
+  </div>
+</div>
 
 <div class="page">
   <div class="chrome-outer">
@@ -209,7 +325,7 @@
           <button class="printbtn" onclick="window.print()">PRINT</button>
         </div>
 
-        <h1>Ion Laser Summoning & Attunement (Archive Extraction)</h1>
+        <h1>Ion Laser Summoning &amp; Attunement (Archive Extraction)</h1>
 
         <div class="note">
           <strong>Source note:</strong> The images on this page originate from a third-party observational device present during early APS events.
@@ -252,7 +368,7 @@
           <strong>Note:</strong> The operator must “bifurcate the silhouette” with the laser during the operation.
         </p>
 
-        <h2>Slide 3: Operator Regalia & Sensors</h2>
+        <h2>Slide 3: Operator Regalia &amp; Sensors</h2>
         <div class="figure">
           <img src="image5.png" alt="Slide 3 field capture - Operator Regalia and Sensors" />
           <div class="caption">FIGURE 3. Partial operator regalia and sensor harness (comms and phase detection).</div>
@@ -318,7 +434,6 @@
         </div>
 
         <div class="figure">
-          <!-- Put your new poster file here. Recommended name: ion-fluctuator-safety.png -->
           <img src="ion-fluctuator-safety.png" alt="Ion Fluctuator Operation Safety Protocol (Printable Poster)" />
           <div class="caption">SAFETY POSTER. Current issue for distribution and print.</div>
         </div>
@@ -326,7 +441,7 @@
         <hr class="hr" />
 
         <a id="sop"></a>
-        <h2>SOP ION-01: Ion Laser Summoning & Attunement</h2>
+        <h2>SOP ION-01: Ion Laser Summoning &amp; Attunement</h2>
 
         <p>
           <strong>Objective:</strong> To safely summon, coordinate, and attune a reflected blue ion laser via external receiver beacons while maintaining atmospheric stability.
@@ -382,19 +497,50 @@
         </p>
 
         <div class="figure">
-          <img src="IMG_6597.JPG alt="Observational frame IMG_6597.JPG" />
+          <img src="IMG_6597.JPG" alt="Observational frame IMG_6597.JPG" />
           <div class="caption">APPENDIX A. Observational frame: IMG_6597.JPG</div>
         </div>
-
 
         <div class="footer">
           END OF DOCUMENT :: BM-APS-ION-01 :: REV 2.4 :: PRINTED COPIES ARE UNCONTROLLED
         </div>
 
-      </div><!-- /content -->
-    </div><!-- /chrome-inner -->
-  </div><!-- /chrome-outer -->
-</div><!-- /page -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const ACCESS_CODE = "93M";
+
+  const gate = document.getElementById("codeGate");
+  const input = document.getElementById("codeInput");
+  const submit = document.getElementById("codeSubmit");
+  const error = document.getElementById("codeError");
+
+  function unlock() {
+    const val = (input.value || "").trim().toUpperCase();
+
+    if (val === ACCESS_CODE) {
+      gate.classList.add("hidden");
+      return;
+    }
+
+    error.classList.remove("hidden");
+    input.value = "";
+    input.focus();
+  }
+
+  submit.addEventListener("click", unlock);
+
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") unlock();
+  });
+
+  input.focus();
+})();
+</script>
 
 </body>
 </html>

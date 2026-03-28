@@ -19,6 +19,9 @@
     }
 
     *{ box-sizing:border-box; }
+    .hidden{
+      display:none !important;
+    }
 
     html, body{
       width:100%;
@@ -114,16 +117,33 @@
       position:fixed;
       inset:0;
       display:flex;
+      flex-direction:column;
       align-items:center;
       justify-content:center;
       background:rgba(0,0,0,0.34);
       z-index:200;
       pointer-events:auto;
       touch-action:manipulation;
+      gap:12px;
+      transition:background 0.35s ease;
     }
 
     #startGate.waiting{
       display:none;
+    }
+
+    #startGate.leaving{
+      background:transparent;
+      pointer-events:none;
+    }
+
+    #startGate.leaving #startGateButton{
+      opacity:0;
+      transition:opacity 0.2s ease;
+    }
+
+    #startGateHint{
+      transition:opacity 0.2s ease;
     }
 
     #startGateButton{
@@ -484,6 +504,10 @@
   <div id="loading">recovering fragments...</div>
   <div id="startGate" class="waiting">
     <button id="startGateButton" type="button">loading...</button>
+    <div id="startGateHint" class="hidden" style="font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.52); text-align:center; font-family: Georgia, 'Times New Roman', serif; line-height:1.5;">
+      Touch a fragment to hear it<br/>
+      Turn ringer on for sound
+    </div>
   </div>
 
   <div id="field"></div>
@@ -758,7 +782,16 @@
       if (e) e.preventDefault();
       if (!state.loadingDone) return;
       await ensureAudioStarted();
-      startGate.remove();
+
+      startGate.classList.add("leaving");
+
+      setTimeout(() => {
+        const btn = document.getElementById("startGateButton");
+        if (btn) btn.remove();
+
+        const hint = document.getElementById("startGateHint");
+        if (hint) hint.classList.remove("hidden");
+      }, 220);
     }
 
     function clamp(n, min, max){
@@ -868,6 +901,13 @@
     }
 
     function beginDrag(fragment, clientX, clientY){
+      const hint = document.getElementById("startGateHint");
+      if (hint) hint.classList.add("hidden");
+
+      if (startGate && startGate.parentNode) {
+        startGate.remove();
+      }
+
       state.dragged = fragment;
       fragment.el.classList.add("dragging");
 

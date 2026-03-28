@@ -65,6 +65,18 @@ startBtn.addEventListener("click", async () => {
     started = true;
     overlay.classList.add("hidden");
     document.getElementById("status").textContent = "ROUND 1";
+
+    const soundHint = document.getElementById("soundHint");
+    if (soundHint) {
+      setTimeout(() => {
+        if (!started || hasWon || isCollapsed) return;
+        soundHint.classList.remove("hidden");
+
+        setTimeout(() => {
+          soundHint.classList.add("hidden");
+        }, 4000);
+      }, 500);
+    }
   } catch(e){
     console.error(e);
     overlayMsg.textContent = String(e.message || e);

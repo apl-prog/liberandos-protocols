@@ -14,7 +14,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--fg);
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  font-family: "Courier New", Courier, monospace;
 }
 
 /* Subtle grain */
@@ -258,5 +258,27 @@ button:disabled { opacity: 0.5; }
 
 .ghost:hover{
   opacity: 0.75;
+  background: rgba(255,255,255,0.05);
+}
+
+.terminalBack{
+  position: fixed;
+  left: 18px;
+  bottom: calc(18px + env(safe-area-inset-bottom));
+  z-index: 70;
+  display: inline-block;
+  padding: 6px 10px;
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 8px;
+  background: rgba(242,242,242,0.03);
+  color: rgba(236,232,225,0.65);
+  text-decoration: none;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.terminalBack:hover{
+  color: rgba(236,232,225,0.85);
   background: rgba(255,255,255,0.05);
 }

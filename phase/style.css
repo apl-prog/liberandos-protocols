@@ -21,7 +21,7 @@ body{
     radial-gradient(1200px 800px at 30% 20%, rgba(163,50,29,0.08), transparent 55%),
     radial-gradient(900px 700px at 70% 90%, rgba(20,24,27,0.1), transparent 55%),
     linear-gradient(180deg, var(--bg), var(--bg2));
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  font-family: "Courier New", Courier, monospace;
 
   /* Prevent iOS rubber-band scroll during interaction */
   overscroll-behavior: none;
@@ -218,4 +218,42 @@ button:disabled{ opacity:0.5; cursor:not-allowed; }
   color:#ff845f;
   text-shadow:0 0 10px rgba(255,107,61,0.18);
   text-decoration: underline;
+}
+
+/* ===== START GATE OVERLAY ===== */
+
+.overlay{
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.88);
+  backdrop-filter: blur(2px);
+  z-index: 60;
+}
+
+.overlay.hidden{
+  display: none;
+}
+
+.panel{
+  width: min(420px, calc(100% - 40px));
+  border: 1px solid rgba(241,241,241,0.14);
+  border-radius: 14px;
+  background: rgba(20,20,20,0.88);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.45);
+  padding: 22px 18px;
+  text-align: center;
+}
+
+.titleText{
+  font-size: 14px;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.msg{
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 10px;
 }

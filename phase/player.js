@@ -16,10 +16,10 @@ const BASE = {
   gain: 0.95,
   lowpassHz: 5200,
   highpassHz: 40,
-  wet: 0.06,
+  wet: 0.0,
   feedback: 0.12,
   delayTime: 0.045,
-  drive: 0.02,
+  drive: 0.0,
   width: 0.92, // 1 = fully stereo, 0 = mono
 };
 
@@ -92,20 +92,56 @@ let motionKick = 0;   // 0..~0.55
 const statusEl = document.getElementById("status");
 const enterBtn = document.getElementById("enterBtn");
 const playPauseBtn = document.getElementById("playPauseBtn");
+// Ensure pause button exists even if removed from HTML
+let ensuredPlayPauseBtn = playPauseBtn;
+
+if (!ensuredPlayPauseBtn) {
+  ensuredPlayPauseBtn = document.createElement("button");
+  ensuredPlayPauseBtn.id = "playPauseBtn";
+  ensuredPlayPauseBtn.className = "ghost";
+  ensuredPlayPauseBtn.textContent = "Pause";
+  ensuredPlayPauseBtn.style.position = "fixed";
+  ensuredPlayPauseBtn.style.right = "18px";
+  ensuredPlayPauseBtn.style.bottom = "calc(18px + env(safe-area-inset-bottom))";
+  ensuredPlayPauseBtn.style.zIndex = "70";
+  ensuredPlayPauseBtn.style.display = "none";
+  ensuredPlayPauseBtn.style.color = "rgba(236,232,225,0.78)";
+  document.body.appendChild(ensuredPlayPauseBtn);
+}
 const stateReadoutEl = document.getElementById("stateReadout");
 const specEl = document.getElementById("spec");
 const wrapEl = document.getElementById("wrap");
 
+const startGate = document.getElementById("startGate");
+const startGateButton = document.getElementById("startGateButton");
+
 const operatorEl = document.getElementById("operator");
 const sheenEl = document.getElementById("stressSheen");
 
-enterBtn.addEventListener("click", onEnter);
-playPauseBtn.addEventListener("click", togglePlay);
+if (enterBtn) enterBtn.addEventListener("click", onEnter);
+if (startGateButton) startGateButton.addEventListener("click", onStartGate);
+if (ensuredPlayPauseBtn) ensuredPlayPauseBtn.addEventListener("click", togglePlay);
 
 // Interaction (pointer)
 operatorEl.addEventListener("pointerdown", onPointerDown);
 operatorEl.addEventListener("pointermove", onPointerMove);
 window.addEventListener("pointerup", onPointerUp);
+
+
+async function onStartGate() {
+  if (startGateButton) startGateButton.disabled = true;
+
+  try {
+    if (!isReady) {
+      await onEnter();
+    }
+    if (startGate) startGate.classList.add("hidden");
+    if (!isPlaying) togglePlay();
+  } catch (err) {
+    console.error(err);
+    if (startGateButton) startGateButton.disabled = false;
+  }
+}
 
 function setStatus(msg) {
   statusEl.textContent = msg;
@@ -118,7 +154,7 @@ async function onEnter() {
 
   try {
     setStatus("INITIALIZING");
-    enterBtn.disabled = true;
+    if (enterBtn) enterBtn.disabled = true;
 
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -131,7 +167,10 @@ async function onEnter() {
     wrapEl.classList.remove("standby");
     wrapEl.classList.add("active");
 
-    playPauseBtn.disabled = false;
+    if (ensuredPlayPauseBtn) {
+      ensuredPlayPauseBtn.disabled = false;
+      ensuredPlayPauseBtn.style.display = "inline-block";
+    }
 
     setStatus("ACTIVE");
     stateReadoutEl.textContent = "FIELD STABLE";
@@ -139,7 +178,7 @@ async function onEnter() {
   } catch (e) {
     console.error(e);
     setStatus("ERROR");
-    enterBtn.disabled = false;
+    if (enterBtn) enterBtn.disabled = false;
     specEl.textContent = "PHASE NODE: LA5 · MODE: DRIFT · STATUS: ERROR";
   }
 }
@@ -302,19 +341,58 @@ function fadeMasterOut() {
   nodes.master.gain.exponentialRampToValueAtTime(0.0001, t0 + STOP_FADE_SECONDS);
 }
 
+function resetToCleanState() {
+  if (!audioCtx || !nodes) return;
+
+  stress = 0;
+  stressTarget = 0;
+  motionKick = 0;
+  lastPtr = null;
+
+  const t0 = audioCtx.currentTime;
+
+  nodes.highpass.frequency.cancelScheduledValues(t0);
+  nodes.highpass.frequency.setValueAtTime(BASE.highpassHz, t0);
+
+  nodes.lowpass.frequency.cancelScheduledValues(t0);
+  nodes.lowpass.frequency.setValueAtTime(BASE.lowpassHz, t0);
+
+  nodes.echoLP.frequency.cancelScheduledValues(t0);
+  nodes.echoLP.frequency.setValueAtTime(ECHO_DAMP.lpHzBase, t0);
+
+  nodes.feedback.gain.cancelScheduledValues(t0);
+  nodes.feedback.gain.setValueAtTime(BASE.feedback, t0);
+
+  nodes.wetGain.gain.cancelScheduledValues(t0);
+  nodes.wetGain.gain.setValueAtTime(BASE.wet, t0);
+
+  nodes.delay.delayTime.cancelScheduledValues(t0);
+  nodes.delay.delayTime.setValueAtTime(BASE.delayTime, t0);
+
+  nodes.shaper.curve = makeSoftClipCurve(BASE.drive);
+  setWidth(BASE.width);
+
+  if (sheenEl) sheenEl.style.opacity = "0";
+  if (stateReadoutEl) stateReadoutEl.textContent = "FIELD STABLE";
+}
+
 function togglePlay() {
   if (!isReady) return;
 
   if (!isPlaying) {
     if (audioCtx.state === "suspended") audioCtx.resume();
 
+    resetToCleanState();
     buildSource();
+    if (source) {
+      source.playbackRate.setValueAtTime(1.0, audioCtx.currentTime);
+    }
 
     fadeMasterIn();
     source.start(audioCtx.currentTime + 0.02);
 
     isPlaying = true;
-    playPauseBtn.textContent = "Pause";
+    if (ensuredPlayPauseBtn) ensuredPlayPauseBtn.textContent = "Pause";
     setStatus("RUNNING");
     specEl.innerHTML = specEl.innerHTML.replace(/STATUS:\s*\w+/i, "STATUS: RUNNING");
   } else {
@@ -329,7 +407,7 @@ function togglePlay() {
     source = null;
 
     isPlaying = false;
-    playPauseBtn.textContent = "Play";
+    if (ensuredPlayPauseBtn) ensuredPlayPauseBtn.textContent = "Play";
     setStatus("HOLD");
     specEl.innerHTML = specEl.innerHTML.replace(/STATUS:\s*\w+/i, "STATUS: HOLD");
   }

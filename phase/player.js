@@ -100,13 +100,15 @@ if (!ensuredPlayPauseBtn) {
   ensuredPlayPauseBtn.id = "playPauseBtn";
   ensuredPlayPauseBtn.className = "ghost";
   ensuredPlayPauseBtn.textContent = "Pause";
-  ensuredPlayPauseBtn.style.position = "fixed";
-  ensuredPlayPauseBtn.style.right = "18px";
-  ensuredPlayPauseBtn.style.bottom = "calc(18px + env(safe-area-inset-bottom))";
-  ensuredPlayPauseBtn.style.zIndex = "70";
-  ensuredPlayPauseBtn.style.display = "none";
   ensuredPlayPauseBtn.style.color = "rgba(236,232,225,0.78)";
-  document.body.appendChild(ensuredPlayPauseBtn);
+  ensuredPlayPauseBtn.style.display = "none";
+
+  const playPauseMount = document.getElementById("playPauseMount");
+  if (playPauseMount) {
+    playPauseMount.appendChild(ensuredPlayPauseBtn);
+  } else {
+    document.body.appendChild(ensuredPlayPauseBtn);
+  }
 }
 const stateReadoutEl = document.getElementById("stateReadout");
 const specEl = document.getElementById("spec");

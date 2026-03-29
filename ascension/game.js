@@ -192,7 +192,11 @@ function triggerCollapse(){
   if (typeof collapseAudio === "function") collapseAudio();
 
   setTimeout(() => {
-    if (!hasWon) document.getElementById("status").textContent = "RECOVERY FAILED";
+    if (!hasWon) {
+      document.getElementById("status").textContent = "RECOVERY FAILED";
+      const failPanel = document.getElementById("failPanel");
+      if (failPanel) failPanel.classList.remove("hidden");
+    }
   }, 4200);
 }
 

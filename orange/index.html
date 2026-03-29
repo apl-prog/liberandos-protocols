@@ -7,6 +7,16 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <div id="startGate" class="overlay">
+      <div class="panel">
+        <div class="title">Experimental Mix Apparatus</div>
+        <div class="msg">Tap to start</div>
+        <div class="msg" style="font-size:12px; opacity:0.7; margin-top:-4px;">
+          Turn ringer on for sound
+        </div>
+        <button id="startGateButton" class="primary" type="button">START</button>
+      </div>
+    </div>
     <main class="wrap standby" id="wrap">
       <header class="top">
         <div class="title">
@@ -69,13 +79,9 @@
           <!-- Status now lives with the controls -->
           <div class="status mono" id="status">STANDBY</div>
 
-          <button id="enterBtn" class="primary">Enter</button>
-          <button id="playPauseBtn" class="ghost" disabled>Play</button>
 
           <div class="hint">
             Tap the orange to change state.
-            <br />
-            If agent is using EYEPhone, switch Silent Mode off.
           </div>
         </div>
       </section>

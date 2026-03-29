@@ -200,3 +200,63 @@ button:disabled { opacity: 0.5; }
   75%  { content: "..."; }
   100% { content: ""; }
 }
+
+/* ===== START GATE OVERLAY ===== */
+
+.overlay{
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,0.90);
+  backdrop-filter: blur(2px);
+  z-index: 50;
+}
+
+.overlay.hidden{
+  display: none;
+}
+
+.panel{
+  width: min(420px, calc(100% - 40px));
+  border: 1px solid rgba(242,242,242,0.14);
+  border-radius: 14px;
+  background: rgba(12,12,13,0.88);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.42);
+  padding: 22px 18px;
+  text-align: center;
+}
+
+.title{
+  font-size: 14px;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+}
+
+.msg{
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+
+.primary{
+  width: 100%;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(242,242,242,0.08);
+}
+
+.ghost{
+  padding: 4px 8px;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  opacity: 0.5;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(242,242,242,0.02);
+}
+
+.ghost:hover{
+  opacity: 0.75;
+  background: rgba(255,255,255,0.05);
+}

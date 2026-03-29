@@ -55,20 +55,56 @@ let isPlaying = false;
 let startAt = 0;
 let offset = 0;
 let currentState = "Full Fruit";
+let stateTapStartsPlayback = false;
 
 const statusEl = document.getElementById("status");
 const enterBtn = document.getElementById("enterBtn");
 const playPauseBtn = document.getElementById("playPauseBtn");
+// Ensure pause button exists (in case removed from HTML)
+let ensuredPlayPauseBtn = playPauseBtn;
+
+if (!ensuredPlayPauseBtn) {
+  ensuredPlayPauseBtn = document.createElement("button");
+  ensuredPlayPauseBtn.id = "playPauseBtn";
+  ensuredPlayPauseBtn.className = "ghost";
+  ensuredPlayPauseBtn.textContent = "Pause";
+  ensuredPlayPauseBtn.style.position = "fixed";
+  ensuredPlayPauseBtn.style.right = "18px";
+  ensuredPlayPauseBtn.style.bottom = "calc(18px + env(safe-area-inset-bottom))";
+  ensuredPlayPauseBtn.style.zIndex = "60";
+  ensuredPlayPauseBtn.style.color = "rgba(236,232,225,0.78)";
+  ensuredPlayPauseBtn.style.display = "none";
+  document.body.appendChild(ensuredPlayPauseBtn);
+}
 const nowEl = document.getElementById("now");
 const specEl = document.getElementById("spec");
 const wrapEl = document.getElementById("wrap");
 const stateReadoutEl = document.getElementById("stateReadout");
 
+const startGate = document.getElementById("startGate");
+const startGateButton = document.getElementById("startGateButton");
+
 const controls = Array.from(document.querySelectorAll("[data-state]"));
 
-enterBtn.addEventListener("click", onEnter);
-playPauseBtn.addEventListener("click", togglePlay);
+if (enterBtn) enterBtn.addEventListener("click", onEnter);
+if (startGateButton) startGateButton.addEventListener("click", onStartGate);
+if (ensuredPlayPauseBtn) ensuredPlayPauseBtn.addEventListener("click", togglePlay);
 controls.forEach(el => el.addEventListener("click", () => setState(el.dataset.state)));
+
+async function onStartGate() {
+  if (startGateButton) startGateButton.disabled = true;
+
+  try {
+    if (!isReady) {
+      await onEnter();
+    }
+    stateTapStartsPlayback = true;
+    if (startGate) startGate.classList.add("hidden");
+  } catch (err) {
+    console.error(err);
+    if (startGateButton) startGateButton.disabled = false;
+  }
+}
 
 function setStatus(msg) {
   statusEl.textContent = msg;
@@ -109,6 +145,10 @@ function setState(name) {
   }
 
   controls.forEach(el => el.classList.toggle("active", el.dataset.state === name));
+
+  if (stateTapStartsPlayback && !isPlaying) {
+    togglePlay();
+  }
 }
 
 function applyPreset(name) {
@@ -132,7 +172,7 @@ async function onEnter() {
 
   try {
     setStatus("INITIALIZING");
-    enterBtn.disabled = true;
+    if (enterBtn) enterBtn.disabled = true;
 
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -252,14 +292,17 @@ async function onEnter() {
     const sid = makeSessionId();
     setSpec("ACTIVE", sid);
 
-    playPauseBtn.disabled = false;
+    if (ensuredPlayPauseBtn) {
+      ensuredPlayPauseBtn.disabled = false;
+      ensuredPlayPauseBtn.style.display = "inline-block";
+    }
 
     setState("Full Fruit");
     setStatus("ACTIVE");
   } catch (err) {
     console.error(err);
     setStatus("ERROR");
-    enterBtn.disabled = false;
+    if (enterBtn) enterBtn.disabled = false;
     setSpec("ERROR", "----");
   }
 }
@@ -288,7 +331,7 @@ function buildSources() {
     if (isPlaying) {
       isPlaying = false;
       offset = 0;
-      playPauseBtn.textContent = "Play";
+      if (ensuredPlayPauseBtn) ensuredPlayPauseBtn.textContent = "Play";
       setStatus("FINISHED");
       // preserve link
       specEl.innerHTML = specEl.innerHTML.replace(/STATUS:\s*\w+/i, "STATUS: COMPLETE");
@@ -316,14 +359,14 @@ function togglePlay() {
     sources.vox.start(when, offset);
 
     isPlaying = true;
-    playPauseBtn.textContent = "Pause";
+    if (ensuredPlayPauseBtn) ensuredPlayPauseBtn.textContent = "Pause";
     setStatus("RUNNING");
     specEl.innerHTML = specEl.innerHTML.replace(/STATUS:\s*\w+/i, "STATUS: RUNNING");
   } else {
     offset = audioCtx.currentTime - startAt;
     safeStopAll();
     isPlaying = false;
-    playPauseBtn.textContent = "Play";
+    if (ensuredPlayPauseBtn) ensuredPlayPauseBtn.textContent = "Play";
     setStatus("HOLD");
     specEl.innerHTML = specEl.innerHTML.replace(/STATUS:\s*\w+/i, "STATUS: HOLD");
   }

@@ -6,119 +6,150 @@
     <title>LIBERANDOS · PROTOCOLS</title>
     <meta name="robots" content="noindex,nofollow" />
     <style>
-      :root{
-        --bg:#070A0D;
-        --panel:#0B1016;
-        --line:rgba(255,255,255,.10);
-        --text:rgba(255,255,255,.90);
-        --muted:rgba(255,255,255,.60);
-        --faint:rgba(255,255,255,.38);
-        --accent:rgba(255,255,255,.90);
-      }
-      html,body{height:100%;}
-      body{
-        margin:0;
-        background: radial-gradient(1200px 700px at 20% 10%, rgba(255,255,255,.06), transparent 60%),
-                    radial-gradient(900px 500px at 80% 30%, rgba(255,255,255,.04), transparent 55%),
-                    var(--bg);
-        color:var(--text);
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-        letter-spacing:.02em;
-      }
-      .wrap{
-        max-width: 860px;
-        margin: 0 auto;
-        padding: 22px;
-      }
-      .header{
-        display:flex;
-        align-items:flex-start;
-        justify-content:space-between;
-        gap:16px;
-        border:1px solid var(--line);
-        background: linear-gradient(180deg, rgba(255,255,255,.04), transparent 75%), var(--panel);
-        border-radius: 16px;
-        padding: 18px 18px 14px;
-      }
-      .title{
-        margin:0;
-        font-size: 12px;
-        text-transform: uppercase;
-        letter-spacing: .16em;
-        color:var(--muted);
-      }
-      .stamp{
-        text-align:right;
-        font-size: 11px;
-        color:var(--faint);
-        line-height:1.35;
-        user-select:none;
-      }
-      .stamp b{ color: var(--muted); font-weight:600; }
-      .grid{
-        margin-top: 14px;
-        border:1px solid var(--line);
-        border-radius: 16px;
-        overflow:hidden;
-        background: var(--panel);
-      }
-      .row{
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        gap:14px;
-        padding: 14px 16px;
-        border-top:1px solid var(--line);
-      }
-      .row:first-child{ border-top:none; }
-      .left{
-        display:flex;
-        flex-direction:column;
-        gap:4px;
-        min-width:0;
-      }
-      .code{
-        font-size: 12px;
-        color:var(--faint);
-        text-transform:uppercase;
-        letter-spacing:.12em;
-        white-space:nowrap;
-      }
-      .name{
-        font-size: 14px;
-        color:var(--text);
-        white-space:nowrap;
-        overflow:hidden;
-        text-overflow:ellipsis;
-      }
-      .meta{
-        font-size: 12px;
-        color:var(--muted);
-      }
-      a.launch{
-        flex: 0 0 auto;
-        text-decoration:none;
-        color: var(--accent);
-        border:1px solid var(--line);
-        padding: 10px 12px;
-        border-radius: 12px;
-        font-size: 12px;
-        letter-spacing:.10em;
-        text-transform:uppercase;
-        background: rgba(255,255,255,.03);
-      }
-      a.launch:hover{ background: rgba(255,255,255,.06); }
-      .footer{
-        margin-top: 12px;
-        display:flex;
-        justify-content:space-between;
-        gap:12px;
-        color:var(--faint);
-        font-size: 11px;
-        padding: 0 4px;
-      }
-      .footer .muted{ color:var(--muted); }
-    </style>
+  :root{
+    --bg:#000000;
+    --panel:#0b0b0b;
+    --panel-2:#111111;
+    --button:#060606;
+    --text:#ece8e1;
+    --muted:#d7d1c8;
+    --soft:#b8afa2;
+    --line:rgba(255,255,255,0.10);
+    --line-strong:rgba(255,255,255,0.14);
+    --max:860px;
+  }
+
+  *{ box-sizing:border-box; }
+
+  html{
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    letter-spacing:0.02em;
+    font-size:1rem;
+  }
+
+  .wrap{
+    width:min(calc(100% - 32px), var(--max));
+    margin:0 auto;
+    padding:28px 0 60px;
+  }
+
+  .header{
+    border:1px solid var(--line);
+    background:var(--panel);
+    padding:18px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    border-radius:10px;
+  }
+
+  .title{
+    margin:0;
+    font-size:12px;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--soft);
+  }
+
+  .stamp{
+    text-align:right;
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.4;
+  }
+
+  .stamp b{
+    color:var(--text);
+    font-weight:600;
+  }
+
+  .grid{
+    margin-top:18px;
+    border:1px solid var(--line);
+    background:var(--panel);
+    border-radius:10px;
+    overflow:hidden;
+  }
+
+  .row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    padding:16px;
+    border-top:1px solid var(--line);
+    background:var(--panel-2);
+    border-radius:0;
+  }
+
+  .row:first-child{
+    border-top:none;
+  }
+
+  .left{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    min-width:0;
+  }
+
+  .code{
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--soft);
+  }
+
+  .name{
+    font-size:14px;
+    letter-spacing:0.04em;
+    color:var(--text);
+  }
+
+  .meta{
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  a.launch{
+    text-decoration:none;
+    border:1px solid var(--line-strong);
+    background:var(--button);
+    padding:10px 14px;
+    font-size:12px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--text);
+    flex:0 0 auto;
+    border-radius:8px;
+  }
+
+  a.launch:hover{
+    opacity:0.82;
+  }
+
+  .footer{
+    margin-top:16px;
+    display:flex;
+    justify-content:space-between;
+    font-size:11px;
+    color:var(--muted);
+  }
+
+  .muted{
+    color:var(--soft);
+  }
+</style>
   </head>
   <body>
     <main class="wrap">

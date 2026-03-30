@@ -6,8 +6,8 @@
   <title>Liberandos Recovery Decoder</title>
   <style>
     :root{
-      --bg1:#0a0d11;
-      --bg2:#14181e;
+      --bg1:#000000;
+      --bg2:#000000;
       --fg:rgba(255,255,255,0.9);
       --soft:rgba(255,255,255,0.08);
       --soft2:rgba(255,255,255,0.16);
@@ -29,10 +29,10 @@
       margin:0;
       overflow:hidden;
       background:
-        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.03), transparent 30%),
-        radial-gradient(circle at 80% 30%, rgba(186,120,58,0.04), transparent 25%),
-        radial-gradient(circle at 40% 75%, rgba(255,255,255,0.02), transparent 28%),
-        linear-gradient(180deg, var(--bg1), var(--bg2));
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,0.02), transparent 30%),
+        radial-gradient(circle at 80% 30%, rgba(186,120,58,0.025), transparent 25%),
+        radial-gradient(circle at 40% 75%, rgba(255,255,255,0.015), transparent 28%),
+        #000000;
       color:var(--fg);
       font-family: Georgia, "Times New Roman", serif;
       overscroll-behavior:none;
@@ -77,14 +77,16 @@
       100% { transform:translateY(18px); }
     }
 
-    #diagram{
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      z-index:3;
-      opacity:0.34;
-      mix-blend-mode:screen;
-    }
+   #diagram{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:3;
+  opacity:0.12;
+  filter:blur(3.5px);
+  mix-blend-mode:screen;
+  transition:opacity 0.9s ease, filter 0.9s ease;
+}
 
     #diagram svg{
       width:100%;
@@ -475,11 +477,19 @@
   <div id="diagram" aria-hidden="true">
     <svg viewBox="0 0 100 100" preserveAspectRatio="none">
       <g fill="none" stroke="rgba(255,255,255,0.10)" stroke-width="0.14">
-        <path d="M10,18 A22,22 0 0 1 34,42" />
-        <path d="M58,14 A16,16 0 0 1 75,31" />
-        <path d="M78,36 A18,18 0 0 1 60,56" />
-        <path d="M20,66 A20,20 0 0 0 41,86" />
-        <path d="M66,70 A24,24 0 0 0 90,46" />
+        <!-- Angular markers -->
+        <polygon points="10,18 16,24 8,26" />
+        <polygon points="58,14 64,20 56,22" />
+        <polygon points="78,36 84,42 76,44" />
+        <polygon points="20,66 26,72 18,74" />
+        <polygon points="66,70 72,76 64,78" />
+
+        <!-- subtle signal lines -->
+        <line x1="16" y1="24" x2="34" y2="42" />
+        <line x1="64" y1="20" x2="75" y2="31" />
+        <line x1="84" y1="42" x2="60" y2="56" />
+        <line x1="26" y1="72" x2="41" y2="86" />
+        <line x1="72" y1="76" x2="90" y2="46" />
       </g>
       <g fill="none" stroke="rgba(186,120,58,0.18)" stroke-width="0.10">
         <circle cx="18" cy="28" r="5.6" />
@@ -755,7 +765,19 @@
         loopVoice.gain.gain.linearRampToValueAtTime(0.0001, now + 0.15);
         loopVoice.source.stop(now + 0.18);
       } catch (_) {}
-    }
+    }function updateDiagramClarity(){
+  const diagram = document.getElementById("diagram");
+  if (!diagram) return;
+
+  const total = STEMS.length;
+  const progress = clamp(state.solvedCount / total, 0, 1);
+
+  const opacity = 0.12 + progress * 0.30;
+  const blur = 3.5 - progress * 3.1;
+
+  diagram.style.opacity = opacity.toFixed(3);
+  diagram.style.filter = `blur(${Math.max(0.4, blur).toFixed(2)}px)`;
+}
 
     async function ensureAudioStarted(){
       if (audioStarted) return;
@@ -854,7 +876,8 @@
         return { id: i, file: stem.file, el, x: 0, y: 0 };
       });
 
-      layoutSlots();
+   layoutSlots();
+updateDiagramClarity();
 
       const used = [];
       state.fragments = STEMS.map((stem, i) => {
@@ -918,6 +941,7 @@
       if (fragment.placed) {
         fragment.placed = false;
         state.solvedCount = Math.max(0, state.solvedCount - 1);
+updateDiagramClarity();
         fragment.el.classList.remove("locked");
         state.slots[fragment.slotIndex].el.classList.remove("solved");
 
@@ -1056,6 +1080,7 @@
       });
 
       state.solvedCount += 1;
+updateDiagramClarity();
 
       if (state.solvedCount === STEMS.length && !state.revealed) {
         revealCompletion();
